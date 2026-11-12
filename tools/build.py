@@ -61,6 +61,14 @@ POSTS = [
         "source": "jalammar.github.io",
     },
     {
+        "slug": "how-gpt3-works-visualizations-animations",
+        "date": "2020-07-27",
+        "title_en": "How GPT3 Works - Visualizations and Animations",
+        "title_zh": "GPT-3 是如何工作的——可视化与动画",
+        "original_url": JALAMMAR_BASE + "/how-gpt3-works-visualizations-animations/",
+        "source": "jalammar.github.io",
+    },
+    {
         "slug": "illustrated-gpt2",
         "date": "2019-08-12",
         "title_en": "The Illustrated GPT-2 (Visualizing Transformer Language Models)",
@@ -74,6 +82,14 @@ POSTS = [
         "title_en": "The Illustrated Word2vec",
         "title_zh": "图解 Word2vec",
         "original_url": JALAMMAR_BASE + "/illustrated-word2vec/",
+        "source": "jalammar.github.io",
+    },
+    {
+        "slug": "visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention",
+        "date": "2018-05-09",
+        "title_en": "Visualizing A Neural Machine Translation Model (Mechanics of Seq2seq Models With Attention)",
+        "title_zh": "可视化一个神经机器翻译模型（Seq2seq 模型与 Attention 机制）",
+        "original_url": JALAMMAR_BASE + "/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention/",
         "source": "jalammar.github.io",
     },
     {
@@ -149,6 +165,23 @@ STYLE = """
   .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
   .site-footer .badge img { display:inline-block; }
   .backlink { font-size:.9rem; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
 </style>
 """
 
