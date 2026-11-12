@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>神经网络基础数学的可视化讲解（前向传播与激活函数） | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>神经网络基础数学的可视化讲解（前向传播与激活函数）</h1>
+<p class="post-meta">原文：A Visual And Interactive Look at Basic Neural Network Math · 2018-03-23 ·
+  <a href="https://jalammar.github.io/feedforward-neural-networks-visual-interactive/">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://jalammar.github.io/feedforward-neural-networks-visual-interactive/">A Visual And Interactive Look at Basic Neural Network Math</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：jalammar.github.io）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><p>在<a href="visual-interactive-guide-basics-neural-networks.html">上一篇文章中，我们探讨了神经网络的基本概念</a>。现在再举一个例子，借它探索神经网络预测中涉及的一些基本数学思想。</p>
+<video width="100%" height="auto" loop autoplay controls>
+  <source src="https://jalammar.github.io/images/titanic_nn_calculation.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+<p>如果你当时就在泰坦尼克号上，船沉的时候你能活下来吗？我们来建一个模型，预测一个人的生还概率。</p>
+<p>这将是一个在<a href="visual-interactive-guide-basics-neural-networks.html">上一篇文章</a>基础上讨论的神经网络模型，但因为加入了隐藏层和激活函数，它的预测精度会更高。</p>
+<p>这次使用的数据集是 Kaggle 的<a href="https://www.kaggle.com/c/titanic/data">泰坦尼克号乘客名单</a>。它列出了乘客的姓名和其他信息，并标明每位乘客是否在这场沉船事故中生还。</p>
+<p>原始数据长这样：</p>
+<div class="titanic-dataset">
+
+<table>
+<thead>
+<tr>
+<th>PassengerId</th>
+<th>Survived</th>
+<th>Pclass</th>
+<th>Name</th>
+<th>Sex</th>
+<th>Age</th>
+<th>SibSp</th>
+<th>Parch</th>
+<th>Ticket</th>
+<th>Fare</th>
+<th>Cabin</th>
+<th>Embarked</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>3</td>
+<td>Braund, Mr. Owen Harris</td>
+<td>male</td>
+<td>22.0</td>
+<td>1</td>
+<td>0</td>
+<td>A/5 21171</td>
+<td>7.2500</td>
+<td>NaN</td>
+<td>S</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>Cumings, Mrs. John Bradley (Florence Briggs Th...</td>
+<td>female</td>
+<td>38.0</td>
+<td>1</td>
+<td>0</td>
+<td>PC 17599</td>
+<td>71.2833</td>
+<td>C85</td>
+<td>C</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>3</td>
+<td>Heikkinen, Miss. Laina</td>
+<td>female</td>
+<td>26.0</td>
+<td>0</td>
+<td>0</td>
+<td>STON/O2. 3101282</td>
+<td>7.9250</td>
+<td>NaN</td>
+<td>S</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<p>大部分列我们暂时用不上，只用 sex（性别）和 age（年龄）两列做特征，用是否生还作为要预测的标签。</p>
+<div class="two_variables">
+  <table>
+    <thead>
+      <tr>
+        <th>年龄</th>
+        <th>性别</th>
+        <th>是否生还？</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>22</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>38</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>26</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td colspan="3">…… 共 891 行</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>我们要建一个网络，预测某位乘客是否生还。</p>
+<p>神经网络的输入必须是数值，所以 sex 列要做转换——男性记 0，女性记 1。你会注意到数据集在生还列上已经用了类似编码——生还记 1，遇难记 0。</p>
+<p>能用来训练这个预测的最简单神经网络长这样：</p>
+<div class="img-div" markdown="0">
+    <img src="https://jalammar.github.io/images/two-input-one-output-sigmoid-network.png" alt="两个输入、一个输出、输出层用 sigmoid 激活的神经网络"/>
+    计算一次预测，就是把"age"和"sex"的取值填进去，计算便从左向右流动。
+    不过在拿它做预测之前，得先跑一遍"训练"过程，求出权重（<span class="weight-node-text">w</span>）和偏置（<span class="bias-node-text">b</span>）的值。
+
+<br />
+注：相比上一篇文章，我们稍微调整了网络的画法——偏置节点更常见的表示方式就是图中这样。
+</div>
+
+<p>下面回顾这个网络的组成要素及其工作方式：</p>
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+<img src="https://jalammar.github.io/images/input-neuron.png" alt="输入神经元"/>
+</div>
+<div class="col-sm-8 side-column">
+
+<p>输入神经元是填入输入值的地方（比如一个人的年龄），计算从这里开始。向外的连接以及整张图其余部分，告诉我们要为算出预测还需要做哪些计算。</p>
+</div>
+</div>
+
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+<img src="https://jalammar.github.io/images/weight.png" alt="带权重的连接"/>
+</div>
+<div class="col-sm-8 side-column">
+
+<p>如果一条连接带权重，数值经过它时就要乘以这个权重。</p>
+<pre><code>connection_output = weight * connection_input</code></pre>
+</div>
+</div>
+
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" markdown="0">
+    <img src="https://jalammar.github.io/images/neuron.png" alt="神经元"/>
+</div>
+<div class="col-sm-8 side-column">
+如果神经元有输入，它把所有输入的值加起来，沿输出连接发送这个和。
+
+<pre><code>node_output = input_1 + input_2</code></pre>
+</div>
+</div>
+
+<h3 id="sigmoid-">Sigmoid <a name="sigmoid" href="#sigmoid">#</a></h3>
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column">
+
+<img src="https://jalammar.github.io/images/sigmoid-neuron.png" alt="sigmoid 神经元"/>
+
+</div>
+<div class="col-sm-8 side-column">
+
+<p>要把网络的计算结果变成一个 0 到 1 之间的概率值，必须把输出层的数值通过一个 "sigmoid" 公式。Sigmoid 按一条特定的曲线把神经元的输出值压缩到 0 和 1 之间。</p>
+<p>f(x) = 1 / (1 + e^(-x))</p>
+<p>其中 e 是数学常数，约等于 2.71828。</p>
+<pre><code>def sigmoid(x):
+    return 1/(1 + math.exp(-x))
+
+output = sigmoid(value)</code></pre>
+</div>
+</div>
+
+<h3 id="sigmoid-可视化-">Sigmoid 可视化 <a name="sigmoid-visualization" href="#sigmoid-visualization">#</a></h3>
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+
+<img src="https://jalammar.github.io/images/sigmoid-neuron.png" />
+
+</div>
+<div class="col-sm-8 side-column">
+
+<div class="notice">原站此处是一个可交互的滑块与图像（拖动滑块观察 sigmoid 如何变换各种数值，输入范围 -20 到 20）。静态译文页没有交互组件，请到<a href="https://jalammar.github.io/feedforward-neural-networks-visual-interactive/#sigmoid-visualization">原站交互页面</a>体验。</div>
+
+<p>f(x) = 1 / (1 + e^(-x))</p>
+</div>
+</div>
+
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+<img src="https://jalammar.github.io/images/two-input-one-output-sigmoid-network.png" alt="带权重的网络"/>
+</div>
+<div class="col-sm-8 side-column">
+
+<p>把这一切合起来，用这个浅层网络算一次预测就是：</p>
+<pre><code>def sigmoid(x):
+    return 1/(1 + math.exp(-x))
+
+def calculate_prediction(age, sex, weight_1, weight_2, bias):
+
+    # Multiply the inputs by their weights, sum the results up
+    layer_2_node = age * weight_1 + sex * weight_2 + 1 * bias
+
+    prediction = sigmoid(layer_2_node)
+    return prediction</code></pre>
+</div>
+</div>
+
+<p>既然知道了网络结构，就可以用 891 行数据集的前 600 行，通过[梯度下降]（gradient descent）来训练它。训练过程不在本文展开，那是另一个话题。现在只希望你先对"训练好的网络如何算预测"建立足够的直觉。这个直觉建立起来后，我们以后再用一篇文章讲训练。</p>
+<p>训练过程给出了下面这些值（准确率 73.20%）：</p>
+<pre><code>weight_1 =   -0.016852 # Associated with &quot;Age&quot;
+weight_2 =   0.704039  # Associated with &quot;Sex&quot; (where male is 0, female is 1)
+bias =       -0.116309</code></pre>
+<p>直观地说，权重表示对应特征对预测的贡献有多大——年龄越小，生还机会越好（年龄越大乘以负的权重，得到的负数越大）；如果乘客是女性，生还机会提升得更多。</p>
+<h3 id="预测计算-">预测计算 <a name="prediction-calculation" href="#prediction-calculation">#</a></h3>
+<p>训练好的网络长这样： （原站可把鼠标悬停/点击表格中的数值查看各自的预测）</p>
+<div class="notice">原站此处是由 JavaScript 绘制的交互表格与网络图（悬停某一行数据会在网络图上看到数值流动）。静态译文页无法呈现，请到<a href="https://jalammar.github.io/feedforward-neural-networks-visual-interactive/#prediction-calculation">原站交互页面</a>体验。</div>
+
+<p>73.20% 的准确率并不出色。这类问题正适合加一个隐藏层：隐藏层能提升模型的表达能力，从而表示更复杂的预测函数，取得更好的效果（<a href="http://www.deeplearningbook.org/contents/ml.html">《Deep Learning》第 5 章第 113 页</a>）。</p>
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+
+<img src="https://jalammar.github.io/images/neuron_with_activation.png" alt="带激活函数的加权神经元"/>
+
+</div>
+<div class="col-sm-8 side-column">
+
+<p>对加权输出施加某些数学函数往往很有用。这类函数叫"激活函数"，因为历史上它们把神经元的输出转换为 1（激活）或 0（关闭）。</p>
+<pre><code>def activation_function(x):
+    # Do something to the value
+    ...
+
+weighted_sum = weight * (input_1 + input_2)
+output = activation_function(weighted_sum)</code></pre>
+<p>激活函数对隐藏层至关重要。没有它们，深层网络并不比浅层线性网络强。各类激活函数的综述请看 <a href="https://cs231n.github.io/neural-networks-1/">Neural Networks Part 1: Setting up the Architecture</a> 中"常用激活函数"一节。</p>
+</div>
+</div>
+
+<h3 id="relu-">ReLU <a name="relu" href="#relu">#</a></h3>
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+
+<img src="https://jalammar.github.io/images/relu.png" alt="带激活的加权神经元"/>
+
+</div>
+<div class="col-sm-8 side-column">
+
+<p>激活函数的主流选择叫 ReLU：输入为负就返回 0，否则返回数字本身。就这么简单！</p>
+<p>f(x) = max(0, x)</p>
+<pre><code># Naive scalar relu implementation. In the real world, most calculations are done on vectors
+def relu(x):
+    if x &lt; 0:
+        return 0
+    else:
+        return x
+
+
+output = relu(value)</code></pre>
+</div>
+</div>
+
+<h3 id="relu-可视化-">ReLU 可视化 <a name="relu-visualization" href="#relu-visualization">#</a></h3>
+<div class="row neuron-expo vertical-align">
+<div class="col-sm-4 small-column" >
+
+<img src="https://jalammar.github.io/images/relu.png" />
+
+</div>
+<div class="col-sm-8 side-column">
+
+<div class="notice">原站此处同样是可交互滑块与图像，用于观察 ReLU 如何变换各种数值。静态译文页无法呈现，请到<a href="https://jalammar.github.io/feedforward-neural-networks-visual-interactive/#relu-visualization">原站交互页面</a>体验。</div>
+
+<p>f(x) = max(0, x)</p>
+</div>
+</div>
+
+<h2 id="结语">结语</h2>
+<p>这篇文章在草稿箱里躺了一年多。我曾尝试在这里之后可视化一个更深的网络，但终究没有完成。希望你喜欢这篇内容。有任何反馈，请到 <a href="https://twitter.com/JayAlammar">Twitter @JayAlammar</a> 告诉我。</p>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

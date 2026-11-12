@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>可解释 AI 速查表 | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>可解释 AI 速查表</h1>
+<p class="post-meta">原文：Explainable AI Cheat Sheet · 2021-05-04 ·
+  <a href="https://jalammar.github.io/explainable-ai/">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://jalammar.github.io/explainable-ai/">Explainable AI Cheat Sheet</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：jalammar.github.io）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><p>介绍一份 <a href="https://ex.pegg.io">可解释 AI 速查表（Explainable AI Cheat Sheet）</a>——它帮你从高层视角掌握那一整套用于"让人理解 AI/ML 模型及其预测"的工具与方法。</p>
+<p><a href="https://ex.pegg.io"> <img src="https://jalammar.github.io/images/Explainable-AI-cheat-sheet-v0.2.1080.png" /></a></p>
+<p>我在这个简短的视频里介绍了这份速查表：</p>
+ <div style="text-align:center">
+
+ <iframe width="560" height="315" src="https://www.youtube.com/embed/Yg3q5x7yDeM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+ style="
+ width: 100%;
+ max-width: 560px;"
+ allowfullscreen></iframe>
+</div>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

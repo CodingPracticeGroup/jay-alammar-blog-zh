@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>图解检索增强 Transformer（RETRO） | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>图解检索增强 Transformer（RETRO）</h1>
+<p class="post-meta">原文：The Illustrated Retrieval Transformer · 2022-01-03 ·
+  <a href="https://jalammar.github.io/illustrated-retrieval-transformer/">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://jalammar.github.io/illustrated-retrieval-transformer/">The Illustrated Retrieval Transformer</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：jalammar.github.io）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><p><strong>摘要</strong>：最新一批语言模型可以做得小得多，却能凭借查询数据库或搜索网络获取信息的能力，达到接近 GPT-3 的性能。这是一个重要信号：把模型越做越大，并不是提升性能的唯一途径。</p>
+<h2 id="视频">视频</h2>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/sMPq4cVS4kg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"  style="
+width: 100%;
+max-width: 560px;" allowfullscreen></iframe>
+
+<hr />
+
+<p>过去几年见证了大语言模型（LLM）的崛起——这类机器学习模型正在迅速改变机器处理与生成语言的方式。2017 年以来的部分亮点包括：</p>
+<ul>
+<li>原始的 <a href="illustrated-transformer.html">Transformer</a> 打破了机器翻译此前的性能纪录。</li>
+<li><a href="illustrated-bert.html">BERT</a> 让"先预训练、再微调"的流程以及基于 Transformer 的上下文化词嵌入得到普及，并迅速开始为 <a href="https://blog.google/products/search/search-language-understanding-bert/">Google 搜索</a>和 <a href="https://azure.microsoft.com/en-us/blog/bing-delivers-its-largest-improvement-in-search-experience-using-azure-gpus/">Bing 搜索</a>提供支持。</li>
+<li><a href="illustrated-gpt2.html">GPT-2</a> 展示了机器写作可以达到与人类相当的水平。</li>
+<li>先是 <a href="https://arxiv.org/abs/1910.10683">T5</a>，然后是 <a href="https://huggingface.co/bigscience/T0pp">T0</a>，把迁移学习（在一个任务上训练模型，然后让它在其他相邻任务上也表现出色）的边界不断向前推进，并把大量不同的任务统一表述为文本到文本的任务。</li>
+<li><a href="how-gpt3-works-visualizations-animations.html">GPT-3</a> 表明，生成式模型的大规模扩展可以带来令人震撼的涌现应用（业界仍在训练更大的模型，如 <a href="https://deepmind.com/research/publications/2021/scaling-language-models-methods-analysis-insights-from-training-gopher">Gopher</a>、<a href="https://www.microsoft.com/en-us/research/blog/using-deepspeed-and-megatron-to-train-megatron-turing-nlg-530b-the-worlds-largest-and-most-powerful-generative-language-model/">MT-NLG</a> 等）。</li>
+</ul>
+<p>有一段时间，把模型越做越大似乎成了提升性能的主要途径。而这一领域的最新进展——DeepMind 的 <a href="https://deepmind.com/research/publications/2021/improving-language-models-by-retrieving-from-trillions-of-tokens">RETRO Transformer</a> 和 OpenAI 的 <a href="https://openai.com/blog/improving-factual-accuracy/">WebGPT</a>——扭转了这个趋势：如果我们为较小的生成式语言模型配上一个搜索/查询信息的手段，它们就能与大模型并驾齐驱。</p>
+<p>本文拆解 DeepMind 的 RETRO（<strong>R</strong>etrieval-<strong>E</strong>nhanced <strong>TR</strong>ansf<strong>O</strong>rmer，检索增强 Transformer）及其工作原理。该模型的规模只有 GPT-3 的 4%（75 亿参数，而 GPT-3 Da Vinci 是 1850 亿），性能却与 GPT-3 相当。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/deepmind-retro-retrieval-transformer.png" />
+  <br />
+  RETRO 将检索自数据库的信息纳入模型，让宝贵的参数不必充当昂贵的"事实与世界知识仓库"。
+</div>
+
+<p>RETRO 发表在论文 <a href="https://arxiv.org/abs/2112.04426">Improving Language Models by Retrieving from Trillions of Tokens</a> 中。它延续并建立于研究社区大量检索相关工作之上（<a href="http://www.crm.umontreal.ca/2018/Langue18/pdf/Cheung.pdf">一</a>、<a href="https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/">二</a>、<a href="https://openreview.net/forum?id=HklBjCEKvH">三</a>、<a href="https://arxiv.org/abs/2102.02557">四</a>、<a href="https://openreview.net/forum?id=B184E5qee">五</a>）。本文解释的是模型本身，而非它特别新颖的地方。</p>
+<h2 id="为什么这很重要把语言信息与世界知识信息分开">为什么这很重要：把语言信息与世界知识信息分开</h2>
+<p>语言建模训练模型预测下一个词——本质上就是在句子末尾做填空。</p>
+<p>填空有时需要事实性知识（例如人名或日期）。比如：</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/prompt-1.png" />
+  <br />
+  输入提示：The Dune film was released in ....（《沙丘》电影上映于……）
+</div>
+
+<p>另一些时候，仅凭对语言的熟悉程度就足以猜出该填什么。比如：</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/prompt-2.png" />
+  <br />
+  输入提示：its popularity spread by word-of-mouth to allow Herbert to start working full ....（它的名声靠口口相传，使赫伯特得以开始全职……）
+</div>
+
+<p>这个区分很重要，因为 LLM 把它们知道的一切都编码进了模型参数。对语言信息来说这说得通，但对事实与世界知识信息来说非常低效。</p>
+<p>通过在语言模型中加入检索方法，模型可以小得多。一个"神经数据库"能在文本生成过程中帮它检索所需的事实信息。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/Large-GPT-vs-Retro-transformer-world-knowledge-information.png" />
+  <br />
+  用检索方法辅助语言模型，能减少语言模型为了出色地完成文本生成而必须编码进参数里的信息量。
+</div>
+
+<p>小型语言模型的训练也因此更快，因为需要"背下来"的训练数据减少了。任何人都可以把这些模型部署在更小、更便宜的 GPU 上，并按需调整它们。</p>
+<p>从结构上看，RETRO 就是一个像原始 Transformer 那样的编码器-解码器模型。只不过它借助检索数据库来增强输入序列：模型在数据库中找到最可能的序列，把它们加入输入，然后 RETRO 施展魔法生成输出预测。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/dune-prompt-into-retro-transformer-4.png" />
+  <br />
+  RETRO 用数据库增强输入提示：先用提示从数据库检索相关信息。
+</div>
+
+<p>在研究模型架构之前，我们先深入看看检索数据库。</p>
+<h2 id="检查-retro-的检索数据库">检查 RETRO 的检索数据库</h2>
+<p>数据库是一个键值存储（key-value store）。</p>
+<p>键（key）是一个标准的 BERT 句子嵌入。</p>
+<p>值（value）是文本，分两部分：</p>
+<ol type="1">
+<li><p>邻居（Neighbor），用来计算键的那段文本；</p></li>
+<li><p>续文（Completion），原始文档中该文本的后续内容。</p></li>
+</ol>
+<p>RETRO 的数据库基于 <em>MassiveText</em> 数据集，包含 2 万亿个多语言 token。邻居块与续文块的长度都不超过 64 个 token。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/database-key-value-examples.png" />
+  <br />
+  RETRO 数据库内部一瞥：展示了数据库中键值对的示例。值包含一个邻居块和一个续文块。
+</div>
+
+<p>RETRO 把输入提示切成多个块（chunk）。为简单起见，我们只关注一个块如何被检索到的文本增强。模型实际会对输入提示中的每个块（第一个块除外）执行这个过程。</p>
+<h2 id="数据库查找">数据库查找</h2>
+<p>在到达 RETRO 之前，输入提示先送入 BERT。输出的上下文化向量取平均，构造出一个句子嵌入向量。然后用这个向量去查询数据库。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/bert-sentence-embedding.png" />
+  <br />
+  用 BERT 处理输入提示，得到上下化的 token 嵌入；对它们取平均，得到句子嵌入。
+</div>
+
+<p>然后用这个句子嵌入做近似最近邻搜索（<a href="https://github.com/google-research/google-research/tree/master/scann">https://github.com/google-research/google-research/tree/master/scann</a>）。</p>
+<p>检索出两个最近邻，它们的文本成为 RETRO 输入的一部分。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/neighbor-retrieval-from-retro-neural-database-with-bert-embeddings.png" />
+  <br />
+  用 BERT 句子嵌入从 RETRO 的神经数据库中检索最近邻，然后把它们加入语言模型的输入。
+</div>
+
+<p>这就是 RETRO 现在的输入：输入提示，加上数据库中它的两个最近邻（以及它们的续文）。</p>
+<p>从这里开始，Transformer 块和 RETRO 块会把这些信息纳入自己的处理过程。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/input-prompt-and-retrieved-text-retro-transformer.png" />
+  <br />
+  检索到的邻居被加入语言模型的输入。不过在模型内部，它们会被稍作不同的处理。
+</div>
+
+<h2 id="retro-架构概览">RETRO 架构概览</h2>
+<p>RETRO 的架构是一个编码器栈加一个解码器栈。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/Retro-transformer-encoder-decoder-stacks-2.png" />
+  <br />
+  一个 RETRO Transformer 由编码器栈（处理邻居）和解码器栈（处理输入）组成
+</div>
+
+<p>编码器由标准的 Transformer 编码器块（自注意力 + FFNN）构成。据我理解，RETRO 使用的编码器由两个 Transformer 编码器块组成。</p>
+<p>解码器栈交替使用两种解码器块：</p>
+<ul>
+<li>标准 Transformer 解码器块（ATTN + FFNN）</li>
+<li>RETRO 解码器块（ATTN + 分块交叉注意力（Chunked cross attention，CCA）+ FFNN）</li>
+</ul>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/retro-transformer-blocks-4.png" />
+  <br />
+  构成 RETRO 的三种 Transformer 块
+</div>
+
+<p>先看编码器栈：它处理检索到的邻居，得到之后供注意力使用的 KEYS 和 VALUES 矩阵（复习可看 <a href="illustrated-transformer.html">The Illustrated Transformer</a>）。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/retro-encoder-block-keys-values-2.png" />
+  <br />
+  编码器栈处理检索到的邻居，得到 KEYS 和 VALUES 矩阵
+</div>
+
+<p>解码器块像 GPT 一样处理输入文本：先对提示 token 施加（因果的，即只关注之前 token 的）自注意力，再通过 FFNN 层。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/retro-transformer-decoders-2.png" />
+  <br />
+  输入提示经过包含自注意力和 FFNN 层的标准解码器块
+</div>
+
+<p>只有走到 RETRO 解码器块时，才开始纳入检索到的信息。从第 9 层开始，每隔三层就有一个 RETRO 块（它允许自己的输入关注邻居）。也就是说，第 9、12、15……32 层是 RETRO 块。（两个较小的 RETRO 模型和 Retrofit 模型则从第 6 层开始，而不是第 9 层。）</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/retro-decoder-attention-2.png" />
+  <br />
+  输入提示到达 RETRO 解码器块，信息检索开始
+</div>
+
+<p>所以实际上，就是在这一步，检索到的信息可以"瞥一眼"完成提示所需要的日期等资料。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/retro/retro-decoder-chunked-cross-attention.png" />
+  <br />
+  RETRO 解码器块通过分块交叉注意力（Chunked Cross-Attention）从最近邻块中检索信息
+</div>
+
+<h2 id="相关工作">相关工作</h2>
+<p>用检索技术辅助语言模型一直是活跃的研究方向。此前的一些工作包括：</p>
+<ul>
+<li><a href="https://openreview.net/forum?id=B184E5qee">Improving Neural Language Models with a Continuous Cache</a></li>
+<li><a href="https://openreview.net/forum?id=HklBjCEKvH">Generalization through Memorization: Nearest Neighbor Language Models</a></li>
+<li>阅读 Meta AI 的 <a href="https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/">Retrieval Augmented Generation</a> 博客，以及 Jackie Chi Kit Cheung 关于 <a href="http://www.crm.umontreal.ca/2018/Langue18/pdf/Cheung.pdf">Leveraging External Knowledge in Natural Language Understanding Systems</a> 的讲义</li>
+<li>SPALM：<a href="https://arxiv.org/abs/2102.02557">Adaptive Semiparametric Language Models</a></li>
+<li>DPR：<a href="https://aclanthology.org/2020.emnlp-main.550/">Dense Passage Retrieval for Open-Domain Question Answering</a></li>
+<li><a href="https://arxiv.org/abs/2002.08909">REALM: Retrieval-Augmented Language Model Pre-Training</a></li>
+<li>FiD：<a href="https://aclanthology.org/2021.eacl-main.74/">Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering</a></li>
+<li>EMDR：<a href="https://arxiv.org/abs/2106.05346">End-to-End Training of Multi-Document Reader and Retriever for Open-Domain Question Answering</a></li>
+<li>BlenderBot 2.0：<a href="https://arxiv.org/abs/2107.07566">Internet-Augmented Dialogue Generation</a></li>
+</ul>
+<p>如有任何勘误或反馈，请在<a href="https://github.com/jalammar/jalammar.github.io/discussions/21">这个帖子</a>留言，或在 <a href="https://twitter.com/JayAlammar">Twitter</a> 上联系我。</p>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

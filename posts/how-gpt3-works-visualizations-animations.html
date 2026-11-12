@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>GPT-3 是如何工作的——可视化与动画 | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>GPT-3 是如何工作的——可视化与动画</h1>
+<p class="post-meta">原文：How GPT3 Works - Visualizations and Animations · 2020-07-27 ·
+  <a href="https://jalammar.github.io/how-gpt3-works-visualizations-animations/">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://jalammar.github.io/how-gpt3-works-visualizations-animations/">How GPT3 Works - Visualizations and Animations</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：jalammar.github.io）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><p>科技圈正为 GPT-3 疯狂<a href="https://www.theverge.com/21346343/gpt-3-explainer-openai-examples-errors-agi-potential">刷屏</a>。像 GPT-3 这样的大型语言模型开始用能力给人惊喜。虽然它们对大多数企业来说还不足以直接摆到客户面前，但这些模型已经闪现出的灵光，注定会加速自动化进程、拓展智能计算机系统的想象空间。让我们揭开笼罩在 GPT-3 周围的魔法光环，看看它是如何训练的、如何工作的。</p>
+ <div style="text-align:center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/MQnJZuBGmSQ" title="YouTube video player" frameborder="0" style="
+ width: 100%;
+ max-width: 560px;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<p>训练好的语言模型会生成文本。</p>
+<p>我们可以（可选地）给它输入一些文本，来影响它的输出。</p>
+<p>输出源自模型在训练阶段"学到"的东西——那时它扫过了海量文本。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/01-gpt3-language-model-overview.gif" />
+  <br />
+
+</div>
+
+<p>训练，就是让模型大量接触文本的过程。这个过程已经完成。你现在看到的所有实验，都出自这同一个训练好的模型。据估算，训练耗费了 355 GPU·年，成本 460 万美元。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/02-gpt3-training-language-model.gif" />
+  <br />
+
+</div>
+
+<p>这个 3000 亿 token 的文本数据集用来为模型生成训练样本。例如，上面那一句话就能生成图中这三个训练样本。</p>
+<p>你可以看到，只要把窗口在全部文本上滑动，就能造出海量样本。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/gpt3-training-examples-sliding-window.png" />
+  <br />
+
+</div>
+
+<p>把一条样本喂给模型：我们只给它输入部分，让它预测下一个词。</p>
+<p>模型的预测会是错的。我们计算它预测中的误差，更新模型，让它下一次预测得更好。</p>
+<p>重复数百万次。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/03-gpt3-training-step-back-prop.gif" />
+  <br />
+
+</div>
+
+<p>现在带着更多细节再看一遍这些步骤。</p>
+<p>GPT-3 实际上是一次生成一个 token（这里先假设一个 token 就是一个词）。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/04-gpt3-generate-tokens-output.gif" />
+  <br />
+
+</div>
+
+<p>请注意：本文描述的是 GPT-3 的工作原理，不讨论它新在哪里（新意主要在于大得离谱的规模）。其架构是基于这篇论文的 Transformer 解码器模型：<a href="https://arxiv.org/pdf/1801.10198.pdf">https://arxiv.org/pdf/1801.10198.pdf</a></p>
+<p>GPT-3 庞大得惊人。它把训练所学编码进 1750 亿个数字（称为参数）。每次运行时，正是这些数字用于计算该生成哪个 token。</p>
+<p>未训练的模型以随机参数起步。训练要找的，是能让预测更好的那些取值。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/gpt3-parameters-weights.png" />
+  <br />
+
+</div>
+
+<p>这些数字是模型内部数百个矩阵的一部分。预测过程基本上就是大量的矩阵乘法。</p>
+<p>我在 YouTube 的 <a href="https://youtube.com/watch?v=mSTCzNgDJy4">AI 入门</a>里展示过一个只有 1 个参数的简单 ML 模型——想拆解这头 1750 亿参数的巨兽，那是个好起点。</p>
+<p>要弄清这些参数如何分布、如何使用，我们得打开模型往里面看。</p>
+<p>GPT-3 有 2048 个 token 宽，这就是它的"上下文窗口"（context window）。也就是说，它有 2048 条轨道，token 沿轨道被处理。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/05-gpt3-generate-output-context-window.gif" />
+  <br />
+
+</div>
+
+<p>我们沿着紫色轨道跟踪：一个系统是怎么处理 "robotics" 这个词并产出 "A" 的？</p>
+<p>高层次步骤：</p>
+<ol type="1">
+<li>把词转换为<a href="illustrated-word2vec.html">一个代表该词的向量（一串数字）</a></li>
+<li>计算预测</li>
+<li>把结果向量转换回词</li>
+</ol>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/06-gpt3-embedding.gif" />
+  <br />
+
+</div>
+
+<p>GPT-3 的核心计算发生在它 96 层 Transformer 解码器层的堆叠内部。</p>
+<p>看到这些层了吗？这就是"深度学习"里"深度"的含义。</p>
+<p>每一层都有自己的 18 亿参数来完成计算。"魔法"就发生在这里。下面是这个过程的高层视图：</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/07-gpt3-processing-transformer-blocks.gif" />
+  <br />
+
+</div>
+
+<p>解码器内部每个部分的详细讲解，见我的博客 <a href="illustrated-gpt2.html">The Illustrated GPT2</a>。</p>
+<p>GPT-3 与 GPT-2 的区别在于交替排布的稠密层与<a href="https://arxiv.org/pdf/1904.10509.pdf">稀疏自注意力层</a>。</p>
+<p>这是输入与回复（"Okay human"）穿过 GPT-3 的一张"X 光片"。注意每个 token 都会流经整个层堆叠。前面那些词的输出我们并不关心；输入结束后，我们才开始关心输出。然后我们把生成的每个词再喂回模型。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/08-gpt3-tokens-transformer-blocks.gif" />
+  <br />
+
+</div>
+
+<p>在<a href="https://twitter.com/sharifshameem/status/1284421499915403264">那个 React 代码生成示例</a>里，我认为输入提示（绿色部分）是文字描述，另外还附加了几个"描述 =&gt; 代码"的示例。React 代码就会像图中粉色 token 那样逐词生成出来。</p>
+<p>我的推测是：引导示例（priming examples）和描述被拼接为输入，用特定的 token 分隔示例与结果，然后送入模型。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/09-gpt3-generating-react-code-example.gif" />
+  <br />
+
+</div>
+
+<p>事情居然就以这样的方式跑通了，令人惊叹。等你等到 GPT-3 推出微调（fine-tuning）再看——可能性会更加惊人。</p>
+<p>微调会真正更新模型的权重，使模型在某类任务上变得更好。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/gpt3/10-gpt3-fine-tuning.gif" />
+  <br />
+
+</div>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>图解 GPT-OSS | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>图解 GPT-OSS</h1>
+<p class="post-meta">原文：The Illustrated GPT-OSS · 2025-08-19 ·
+  <a href="https://newsletter.languagemodels.co/p/the-illustrated-gpt-oss">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://newsletter.languagemodels.co/p/the-illustrated-gpt-oss">The Illustrated GPT-OSS</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：Substack「Language Models & Co.」）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><p>OpenAI 的 <a href="https://openai.com/index/gpt-oss-model-card/">GPT-OSS 发布</a>，是继六年前 <a href="illustrated-gpt2.html">GPT-2</a> 之后其主要的开源 LLM 发布。这几年间 LLM 能力有了突飞猛进的进步。虽然该模型本身相对于 DeepSeek、Qwen、Kimi 等现有开源模型未必带来能力的跃升，但它给了我们一个好机会，回顾 LLM 在这段时间里发生了哪些变化。</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!Mw5k!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fef7bcc2e-e402-4a79-ad3e-de80689b1617_1616x814.png" /></p>
+<h2 id="与之前开源-gpt-模型的差别">与之前开源 GPT 模型的差别</h2>
+<p>GPT-OSS 与之前的模型有相似之处：它也是一个自回归 Transformer，逐 token 生成。</p>
+<p>2025 年中的 LLM，主要的差异领域在于：它们生成的 token 能够解决困难得多的问题，靠的是：</p>
+<ul>
+<li><p>使用工具</p></li>
+<li><p>推理</p></li>
+<li><p>在问题求解和编程上更强</p></li>
+</ul>
+<p>下图展示了它的主要架构特征——与当前这批强大的开源模型相比并没有大的偏离。它与 GPT2 最大的架构区别在于：GPT-OSS 是一个<a href="https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-mixture-of-experts">混合专家（mixture-of-experts）</a>模型。</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!SUm9!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc64aa599-20ff-4ad5-a458-d862f3acfd34_2210x1648.png" /></p>
+<p>如果你想更深入理解这个架构，在我们的免费课程 <a href="https://www.deeplearning.ai/short-courses/how-transformer-llms-work/?utm_campaign=handsonllm-launch&amp;utm_medium=partner">How Transformer LLMs Work</a> 里，我们用大量图示（还有独家动画！）详细讲过它。</p>
+<p>用我们在课程里引入的这套描述 attention 的视觉语言，GPT-OSS 的 Transformer Block 长下面这样：</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!w789!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F113b6ba8-237c-4ede-881b-a5202e56486a_2722x844.png" /></p>
+<p>需要说明：这些架构细节里没有什么特别新颖的东西。在最新的 SoTA 开源 MoE 模型中，它们大体都是相似的。</p>
+<h1 id="消息格式message-formatting">消息格式（Message Formatting）</h1>
+<p>对多得多的用户来说，模型的推理与工具调用的行为和格式细节，比架构更重要。</p>
+<p>下图可以看到模型的输入与输出长什么样。</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!9UZU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8b85c00b-ddc5-4c2b-b015-6d53ce23294e_1980x1824.png" /></p>
+<h2 id="消息与输出通道">消息与输出通道</h2>
+<p>我们从开源 LLM 的三类主要用户出发，把这件事拆开讲：</p>
+<ul>
+<li><p><strong>LLM 应用的最终用户</strong></p>
+<ul>
+<li><p>例子：ChatGPT 应用的用户</p></li>
+<li><p>这类用户主要打交道的是自己发出的用户消息和自己看到的最终回答。在有些应用里，他们可能会看到一部分中间的推理轨迹。</p></li>
+</ul></li>
+<li><p><strong>LLM 应用的构建者</strong></p>
+<ul>
+<li><p>例子：Cursor 或 Manus</p></li>
+<li><p><strong>输入消息</strong>：这些构建者可以设置自己的 system 和 developer 消息——定义模型应有的总体行为与指令、安全选择、推理等级，以及供模型使用的工具定义。他们还必须在用户消息里做大量提示词工程和上下文管理。</p></li>
+<li><p><strong>输出消息</strong>：构建者可以选择是否向用户展示推理轨迹；他们还要定义工具、设定推理的量。</p></li>
+</ul></li>
+<li><p><strong>LLM 的后训练者（post-trainers）</strong></p>
+<ul>
+<li>会微调模型的高级用户需要与所有消息类型打交道，并把数据格式化成正确的形状，包括推理、工具调用与响应的格式。</li>
+</ul></li>
+</ul>
+<p>后两类人——LLM 应用构建者和 LLM 后训练者——会受益于理解 assistant 消息的"通道（channel）"概念。它在 <a href="https://github.com/openai/harmony">OpenAI Harmony</a> 仓库中有实现。</p>
+<p><em>（如果你觉得这种讲解有用，一定来看看这本畅销书：300 多张图、在这个深度上解释 LLM，其 <a href="https://github.com/handsOnLLM/Hands-On-Large-Language-Models">GitHub 仓库</a>目前已有 14K stars）</em></p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!KUww!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Faeca4378-59bd-4c16-8753-a91cbb3bb939_400x525.jpeg" title="Hands-On Large Language Models" alt="Hands-On Large Language Models" /></p>
+<p>本书<a href="https://www.llm-book.com/">官方网站</a>。可以在 <a href="https://www.amazon.com/Hands-Large-Language-Models-Understanding/dp/1098150961">Amazon</a> 订购。全部代码已上传到 <a href="https://github.com/handsOnLLM/Hands-On-Large-Language-Models">GitHub</a>。</p>
+<h2 id="消息通道">消息通道</h2>
+<p><img src="https://substackcdn.com/image/fetch/$s_!OUqw!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8918690c-bc23-431c-b060-40c6705a534e_1292x704.png" /></p>
+<p>模型的输出全都是 assistant 消息。模型会把它们归入一个"通道（channel）"类别，以表明消息类型：</p>
+<ul>
+<li><p><strong>Analysis（分析）</strong>：用于推理（以及部分工具调用）</p></li>
+<li><p><strong>Commentary（解说）</strong>：用于函数式调用（以及大部分工具调用）</p></li>
+<li><p><strong>Final（最终）</strong>：包含最终回答的消息</p></li>
+</ul>
+<p>假设我们给模型的提示需要它推理并使用几次工具调用，下图展示了一段三种消息类型都用上的对话：</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!VvDI!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F76d71004-9cd6-49c7-ac0a-0949cf578fb7_1348x1220.png" /></p>
+<p>它们被标为第 1、3、5 轮，因为第 2、4 轮是这些调用的工具响应。最终回答才是最终用户会看到的内容。</p>
+<h2 id="推理">推理</h2>
+<p>推理存在权衡，高级用户必须为此做选择。一方面，更多的推理给了模型更多的时间与算力去琢磨问题，帮助它解决更难的问题；另一方面，其代价是延迟和算力。这个选择在现实中很直白：既有强推理 LLM，也有非推理 LLM，各自擅长不同类型的任务。</p>
+<p>一个折中方案是提供一个能响应特定*推理预算（reasoning budget）*的推理模型。GPT-OSS 就属于这一类。它允许在 system 消息中设置推理模式（<em>low</em>、<em>medium</em> 或 <em>high</em>）。<a href="https://cdn.openai.com/pdf/419b6906-9da6-406c-a19d-1bb078ac7637/oai_gpt-oss_model_card.pdf">模型卡</a>的图 3 展示了这如何影响各项基准的得分，以及推理轨迹（即思维链，CoT）中的 token 数量。</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!kYXS!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb08d0ade-6e6c-4a1c-ab29-1168708a55ff_1668x930.png" /></p>
+<p>可以对比一下 Qwen3 的推理模式：那是二元的 <em>thinking</em> / <em>non-thinking</em> 模式。对于 <em>thinking</em> 模式，它们确实给出了一种在超过某个 token 阈值后停止思考的方法，并<a href="https://qwenlm.github.io/blog/qwen3/">报告</a>了这对各推理基准得分的影响。</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!vhZM!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2d67cd4d-ee73-4b94-87ef-edcbe91fd11f_3180x1970.png" /></p>
+<h2 id="推理模式lowmedium-与-high">推理模式（low、medium 与 high）</h2>
+<p>展示不同推理模式差异的好办法，是问一道困难的推理题。所以我从 AIME25 数据集里挑了一道，分别在三种推理模式下问 120B 模型：</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!ZCth!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff8855923-20a0-42c6-8f65-31f0725f3b18_2478x1884.png" /></p>
+<p>这道题的正确答案是 104。于是 <em>medium</em> 和 <em>high</em> 两种推理模式都答对了，只是 <em>high</em> 模式到达这个答案所需的算力/生成时间是前者的两倍。</p>
+<p>这正印证了我们前面提过的那点：为你的用例选择合适的推理模式：</p>
+<ul>
+<li><p>在做 agentic 任务？如果你的轨迹可能横跨很多步骤，<em>high</em> 甚至 <em>medium</em> 推理可能都太慢了。</p></li>
+<li><p>实时 vs. 离线——考虑哪些任务可以在用户并不主动等待结果的情况下离线完成。</p>
+<ul>
+<li>一个值得琢磨的例子是搜索引擎——查询时之所以能非常快出结果，是因为大量处理与设计工作早已为这种体验准备好了系统。</li>
+</ul></li>
+</ul>
+<h2 id="分词器">分词器</h2>
+<p>分词器与 GPT-4 的相当相似，但在我看来效率略高一点——尤其是在非英文 token 上。注意 emoji 和中文字符各自被分成两个 token 而不是三个；阿拉伯语文本也有更多片段被作为一个整体 token 分组，而不是按字母拆分。</p>
+<p>不过，尽管分词器在这方面可能更好，模型的训练数据仍以英文为主。</p>
+<p>代码（包括 Python 缩进用的制表符 tab）的表现看起来大体一致。数字的分词方式似乎也相同：最多三位的数字分到一个独立 token，更大的数字则被拆开。</p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!Bpio!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F27b67620-e631-4b45-9f9f-ce3629a9e483_1878x1174.png" /></p>
+<h2 id="延伸阅读">延伸阅读</h2>
+<p>以下是我读到的几篇很值得一看的延伸阅读：</p>
+<ul>
+<li><p><a href="https://magazine.sebastianraschka.com/p/from-gpt-2-to-gpt-oss-analyzing-the">From GPT-2 to gpt-oss: Analyzing the Architectural Advances</a>，作者 <a href="https://open.substack.com/users/27393275-sebastian-raschka-phd?utm_source=mentions">Sebastian Raschka, PhD</a></p></li>
+<li><p><a href="https://www.interconnects.ai/p/gpt-oss-openai-validates-the-open">gpt-oss: OpenAI validates the open ecosystem (finally)</a>，作者 <a href="https://open.substack.com/users/10472909-nathan-lambert?utm_source=mentions">Nathan Lambert</a></p></li>
+<li><p><a href="https://artificialanalysis.ai/models/gpt-oss-120b/providers#aime25x32-performance-gpt-oss-120b">gpt-oss-120B (high): API Provider Benchmarking &amp; Analysis</a></p></li>
+</ul>
+<p><em>（如果你觉得这种讲解有用，一定来看看这本畅销书：300 多张图、在这个深度上解释 LLM，其 <a href="https://github.com/handsOnLLM/Hands-On-Large-Language-Models">GitHub 仓库</a>目前已有 14K stars）</em></p>
+<p><img src="https://substackcdn.com/image/fetch/$s_!KUww!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Faeca4378-59bd-4c16-8753-a91cbb3bb939_400x525.jpeg" title="Hands-On Large Language Models" alt="Hands-On Large Language Models" /></p>
+<p>本书<a href="https://www.llm-book.com/">官方网站</a>。可以在 <a href="https://www.amazon.com/Hands-Large-Language-Models-Understanding/dp/1098150961">Amazon</a> 订购。全部代码已上传到 <a href="https://github.com/handsOnLLM/Hands-On-Large-Language-Models">GitHub</a>。</p>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

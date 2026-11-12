@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>Jay Alammar 博客 · 简体中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header>
+<h1>文章列表</h1>
+<p>这里是 <a href="https://jalammar.github.io">Jay Alammar</a> 所著 “The Illustrated”（图解）系列技术博客的简体中文翻译，按原文发表时间倒序排列。点击标题阅读简体中文译文；图片沿用原站资源。</p>
+<ul class="post-list">
+<li><div class="date">2025-08-19</div><a class="title" href="posts/illustrated-gpt-oss.html">图解 GPT-OSS</a><br /><span class="orig">原文：The Illustrated GPT-OSS（Substack「Language Models & Co.」 · <a href="https://newsletter.languagemodels.co/p/the-illustrated-gpt-oss">English</a>）</span></li>
+<li><div class="date">2025-01-27</div><a class="title" href="posts/illustrated-deepseek-r1.html">图解 DeepSeek-R1</a><br /><span class="orig">原文：The Illustrated DeepSeek-R1（Substack「Language Models & Co.」 · <a href="https://newsletter.languagemodels.co/p/the-illustrated-deepseek-r1">English</a>）</span></li>
+<li><div class="date">2022-10-04</div><a class="title" href="posts/illustrated-stable-diffusion.html">图解 Stable Diffusion</a><br /><span class="orig">原文：The Illustrated Stable Diffusion（jalammar.github.io · <a href="https://jalammar.github.io/illustrated-stable-diffusion/">English</a>）</span></li>
+<li><div class="date">2022-01-03</div><a class="title" href="posts/illustrated-retrieval-transformer.html">图解检索增强 Transformer（RETRO）</a><br /><span class="orig">原文：The Illustrated Retrieval Transformer（jalammar.github.io · <a href="https://jalammar.github.io/illustrated-retrieval-transformer/">English</a>）</span></li>
+<li><div class="date">2021-05-04</div><a class="title" href="posts/explainable-ai.html">可解释 AI 速查表</a><br /><span class="orig">原文：Explainable AI Cheat Sheet（jalammar.github.io · <a href="https://jalammar.github.io/explainable-ai/">English</a>）</span></li>
+<li><div class="date">2020-07-27</div><a class="title" href="posts/how-gpt3-works-visualizations-animations.html">GPT-3 是如何工作的——可视化与动画</a><br /><span class="orig">原文：How GPT3 Works - Visualizations and Animations（jalammar.github.io · <a href="https://jalammar.github.io/how-gpt3-works-visualizations-animations/">English</a>）</span></li>
+<li><div class="date">2019-11-26</div><a class="title" href="posts/a-visual-guide-to-using-bert-for-the-first-time.html">BERT 初次使用可视化指南（句子分类实操）</a><br /><span class="orig">原文：A Visual Guide to Using BERT for the First Time（jalammar.github.io · <a href="https://jalammar.github.io/a-visual-guide-to-using-bert-for-the-first-time/">English</a>）</span></li>
+<li><div class="date">2019-08-12</div><a class="title" href="posts/illustrated-gpt2.html">图解 GPT-2（可视化 Transformer 语言模型）</a><br /><span class="orig">原文：The Illustrated GPT-2 (Visualizing Transformer Language Models)（jalammar.github.io · <a href="https://jalammar.github.io/illustrated-gpt2/">English</a>）</span></li>
+<li><div class="date">2019-03-27</div><a class="title" href="posts/illustrated-word2vec.html">图解 Word2vec</a><br /><span class="orig">原文：The Illustrated Word2vec（jalammar.github.io · <a href="https://jalammar.github.io/illustrated-word2vec/">English</a>）</span></li>
+<li><div class="date">2018-12-03</div><a class="title" href="posts/illustrated-bert.html">图解 BERT、ELMo 等（NLP 如何攻克迁移学习）</a><br /><span class="orig">原文：The Illustrated BERT, ELMo, and co. (How NLP Cracked Transfer Learning)（jalammar.github.io · <a href="https://jalammar.github.io/illustrated-bert/">English</a>）</span></li>
+<li><div class="date">2018-06-27</div><a class="title" href="posts/illustrated-transformer.html">图解 Transformer</a><br /><span class="orig">原文：The Illustrated Transformer（jalammar.github.io · <a href="https://jalammar.github.io/illustrated-transformer/">English</a>）</span></li>
+<li><div class="date">2018-05-09</div><a class="title" href="posts/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention.html">可视化一个神经机器翻译模型（Seq2seq 模型与 Attention 机制）</a><br /><span class="orig">原文：Visualizing A Neural Machine Translation Model (Mechanics of Seq2seq Models With Attention)（jalammar.github.io · <a href="https://jalammar.github.io/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention/">English</a>）</span></li>
+<li><div class="date">2018-03-23</div><a class="title" href="posts/feedforward-neural-networks-visual-interactive.html">神经网络基础数学的可视化讲解（前向传播与激活函数）</a><br /><span class="orig">原文：A Visual And Interactive Look at Basic Neural Network Math（jalammar.github.io · <a href="https://jalammar.github.io/feedforward-neural-networks-visual-interactive/">English</a>）</span></li>
+<li><div class="date">2016-12-14</div><a class="title" href="posts/visual-interactive-guide-basics-neural-networks.html">神经网络基础概念的可视化入门（房价例子）</a><br /><span class="orig">原文：A Visual and Interactive Guide to the Basics of Neural Networks（jalammar.github.io · <a href="https://jalammar.github.io/visual-interactive-guide-basics-neural-networks/">English</a>）</span></li>
+</ul>
+<p class="notice">本站是非官方、非商业的社区翻译项目。译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可共享——署名、非商业性使用、相同方式共享。</p>
+
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

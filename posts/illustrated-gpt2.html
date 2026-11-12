@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>图解 GPT-2（可视化 Transformer 语言模型） | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>图解 GPT-2（可视化 Transformer 语言模型）</h1>
+<p class="post-meta">原文：The Illustrated GPT-2 (Visualizing Transformer Language Models) · 2019-08-12 ·
+  <a href="https://jalammar.github.io/illustrated-gpt2/">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://jalammar.github.io/illustrated-gpt2/">The Illustrated GPT-2 (Visualizing Transformer Language Models)</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：jalammar.github.io）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/openAI-GPT-2-3.png"/>
+  <br />
+</div>
+
+<p>今年，我们见证了机器学习一次光彩夺目的应用。<a href="https://openai.com/blog/better-language-models/">OpenAI 的 GPT-2</a> 展现了惊人的写作能力，能写出连贯而富有感染力的文章，超出了我们对当前语言模型能力的预期。GPT-2 并不是一种特别新颖的架构——它的架构与"仅解码器的 Transformer"非常相似。但 GPT-2 是一个非常大的、基于 Transformer 的语言模型，在海量数据集上进行了训练。在这篇文章中，我们将研究使模型能够取得这些成果的架构，深入它的自注意力层，然后再看看仅解码器 Transformer 在语言建模之外的应用。</p>
+<p>我的另一个目标是为我之前的文章 <a href="illustrated-transformer.html">The Illustrated Transformer</a> 补充更多图示，解释 Transformer 的内部 workings，以及自原始论文以来它如何演进。希望这套视觉语言，能让我们在后续解释内部机制持续演进的 Transformer 模型时更加容易。</p>
+<div style="font-size:75%; background-color:#eee; border: 1px solid #bbb; display: table; padding: 7px" markdown="1">
+
+<div style="text-align:center" markdown="1">  
+
+<p><strong>目录</strong></p>
+</div>
+
+<ul>
+<li><strong><a href="#part-1-got-and-language-modeling">第 1 部分：GPT2 与语言建模</a></strong>
+<ul>
+<li>什么是语言模型</li>
+<li>用于语言建模的 Transformer</li>
+<li>与 BERT 的一个区别</li>
+<li>Transformer Block 的演进</li>
+<li>脑外科速成课：透视 GPT-2 内部</li>
+<li>更深入地看内部</li>
+<li>第 1 部分结束：GPT-2，隆重登场</li>
+</ul></li>
+<li><strong><a href="#part-2-illustrated-self-attention">第 2 部分：图解自注意力</a></strong>
+<ul>
+<li>自注意力（不带掩码）</li>
+<li>1- 创建 Query、Key 和 Value 向量</li>
+<li>2- 打分</li>
+<li>3- 求和</li>
+<li>图解掩码自注意力</li>
+<li>GPT-2 的掩码自注意力</li>
+<li>超越语言建模</li>
+<li>你做到了！</li>
+</ul></li>
+<li><strong><a href="#part-3-beyond-language-modeling">第 3 部分：超越语言建模</a></strong>
+<ul>
+<li>机器翻译</li>
+<li>摘要</li>
+<li>迁移学习</li>
+<li>音乐生成</li>
+</ul></li>
+</ul>
+</div>
+
+<h2 id="第-1-部分gpt2-与语言建模-">第 1 部分：GPT2 与语言建模 <a href="#part-1-got-and-language-modeling" name="part-1-got-and-language-modeling">#</a></h2>
+<p>那么，语言模型到底是什么？</p>
+<h3 id="什么是语言模型">什么是语言模型</h3>
+<p>在 <a href="illustrated-word2vec.html">The Illustrated Word2vec</a> 中，我们看过语言模型是什么——基本上就是一个能观察句子的一部分并预测下一个词的机器学习模型。最有名的语言模型，大概就是根据你已经输入的内容来建议下一个词的手机键盘。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/word2vec/swiftkey-keyboard.png"/>
+  <br />
+</div>
+
+<p>从这个意义上说，我们可以说 GPT-2 本质上就是键盘应用的"下一个词预测"功能，只是它比手机里的那个更大、更精妙得多。GPT-2 在一个名为 WebText 的 40GB 海量数据集上训练，这是 OpenAI 的研究人员作为研究工作的一部分从互联网上爬取下来的。做个存储量对比：我在用的键盘应用 SwiftKey 只占 78MB 空间。而最小的 GPT-2 训练变体，为了存下所有参数就占了 500MB。最大的 GPT-2 变体是它的 13 倍，可能占用超过 6.5GB 的存储空间。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-sizes.png"/>
+  <br />
+</div>
+
+<p>体验 GPT-2 的一个好方法是使用 <a href="https://gpt2.apps.allenai.org/?text=Joel%20is">AllenAI GPT-2 Explorer</a>。它用 GPT-2 展示下一个词的十种可能预测（并附上概率分数）。你可以选定一个词，然后看到下一批预测，继续写下去。</p>
+<h3 id="用于语言建模的-transformer">用于语言建模的 Transformer</h3>
+<p>正如我们在 <a href="illustrated-transformer.html">The Illustrated Transformer</a> 里看到的，原始的 Transformer 模型由编码器和解码器组成——各自都是一个由我们所说的 Transformer Block 堆叠而成的栈。那种架构是合适的，因为模型要解决的是机器翻译——一个编码器-解码器架构在过去屡试屡爽的问题。</p>
+<div class="img-div" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/transformer-encoder-decoder.png"/>
+  <br />
+</div>
+
+<p>后续的大量研究工作选择去掉编码器或解码器中的一侧，只使用一摞 Transformer Block——尽可能往高里堆（在现实可行范围内），喂进海量训练文本，再投入海量算力（训练这些语言模型中的某些需要几十万美元，像 <a href="https://deepmind.com/blog/alphastar-mastering-real-time-strategy-game-starcraft-ii/">AlphaStar</a> 这样的项目可能高达数百万美元）。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt-2-transformer-xl-bert-3.png"/>
+  <br />
+</div>
+
+<p>这些 Block 到底能堆多高？事实证明，这正是不同 GPT2 模型规格之间的主要区别之一：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-sizes-hyperparameters-3.png"/>
+  <br />
+</div>
+
+<h3 id="与-bert-的一个区别">与 BERT 的一个区别</h3>
+<blockquote class='subtle'>
+<strong>机器人第一定律</strong><br />
+机器人不得伤害人类个体，或者因不作为而使人类个体受到伤害。
+</blockquote>
+
+<p>GPT-2 是用 Transformer 解码器 Block 构建的。BERT 则用的是 Transformer 编码器 Block。两者的区别我们会在后面的小节细看。但两者之间有一个关键差别：GPT2 和传统语言模型一样，一次只输出一个 token。比如，让我们提示一个训练好的 GPT-2 复述机器人第一定律：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/gpt-2-output.gif"/>
+  <br />
+</div>
+
+<p>这类模型的实际工作方式是：每生成一个 token，就把该 token 加到输入序列中，新的序列又成为模型下一步的输入。这个思想叫"自回归（auto-regression）"。也正是让 <a href="https://karpathy.github.io/2015/05/21/rnn-effectiveness/">RNN 出奇地有效</a>的思想之一。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/gpt-2-autoregression-2.gif"/>
+  <br />
+</div>
+
+<p>GPT2 以及后来的 TransformerXL、XLNet 等模型本质上是自回归的。BERT 不是。这是一种取舍。失去了自回归，BERT 换来了同时利用一个词两侧上下文的能力，从而获得更好的效果。XLNet 把自回归带了回来，同时找到了兼顾两侧上下文的替代方法。</p>
+<h3 id="transformer-block-的演进">Transformer Block 的演进</h3>
+<p><a href="https://arxiv.org/abs/1706.03762">最初的 Transformer 论文</a>提出了两种 Transformer Block：</p>
+<h4 id="编码器-block">编码器 Block</h4>
+<p>第一种是编码器 Block：</p>
+<div class="img-div" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/transformer-encoder-block-2.png"/>
+  <br />
+  原始 Transformer 论文中的编码器 Block 可以接收最长到某个最大序列长度（如 512 个 token）的输入。输入序列比这个上限短也没关系，我们只需把剩下的部分填充（pad）一下。
+</div>
+
+<h4 id="解码器-block">解码器 Block</h4>
+<p>第二种是解码器 Block，它与编码器 Block 只有一点架构上的差异——多了一个层，让它可以关注编码器输出的特定部分：</p>
+<div class="img-div" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/transformer-decoder-block-2.png"/>
+  <br />
+</div>
+
+<p>这里的自注意力层有一个关键区别：它掩码未来的 token——不是像 BERT 那样把词替换成 [mask]，而是在自注意力计算中进行干预，阻止信息从当前计算位置右侧的 token 流过来。</p>
+<p>例如，如果我们高亮位置 #4 的路径，可以看到它只被允许关注当前及之前的 token：</p>
+<div class="img-div" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/transformer-decoder-block-self-attention-2.png"/>
+  <br />
+</div>
+
+<p>务必分清自注意力（BERT 用的）与掩码自注意力（GPT-2 用的）之间的区别。普通的自注意力块允许某个位置偷看它右侧的 token。掩码自注意力则阻止这种情况发生：</p>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/self-attention-and-masked-self-attention.png"/>
+  <br />
+</div>
+
+<h4 id="仅解码器-block">仅解码器 Block</h4>
+<p>在原始论文之后，<a href="https://arxiv.org/pdf/1801.10198.pdf">Generating Wikipedia by Summarizing Long Sequences</a> 提出了 Transformer Block 的另一种排布，能够做语言建模。这个模型扔掉了 Transformer 编码器。因此我们就叫它"Transformer 解码器（Transformer-Decoder）"吧。这个早期的基于 Transformer 的语言模型，由六个 Transformer 解码器 Block 堆叠而成：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/transformer-decoder-intro.png"/>
+  <br />
+  这些解码器 Block 完全相同。我把第一个展开了，以便你看到它的自注意力层是带掩码的版本。注意，模型现在能处理一段文本中最长 4,000 个 token——相比原始 Transformer 的 512 是一次巨大的升级。
+</div>
+
+<p>这些 Block 与原始解码器 Block 非常相似，只是去掉了第二个自注意力层（encoder-decoder attention）。<a href="https://arxiv.org/pdf/1808.04444.pdf">Character-Level Language Modeling with Deeper Self-Attention</a> 研究过类似的架构，用来构建一个一次预测一个字母/字符的语言模型。</p>
+<p>OpenAI 的 GPT-2 模型用的就是这些"仅解码器" Block。</p>
+<h3 id="脑外科速成课透视-gpt-2-内部">脑外科速成课：透视 GPT-2 内部</h3>
+<blockquote class='subtle' markdown="block">
+向心里看，你会看到，
+那些话语在我脑海里刻得那样深。
+雷火在烧，飞快地烧，
+言语之刀把我逼疯，疯了，是的。
+~<strong>[Budgie](https://en.wikipedia.org/wiki/Budgie_(band))</strong>（歌曲《Everything Turns to Yesterday》歌词大意）
+
+</blockquote>
+
+<p>让我们把一个训练好的 GPT-2 放上手术台，看看它是怎么运转的。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt-2-layers-2.png"/>
+  <br />
+  GPT-2 可以处理 1024 个 token。每个 token 沿自己的路径流过所有解码器 Block。
+</div>
+
+<p>运行一个训练好的 GPT-2 最简单的方式，是让它自己信口开河地往下写（技术上叫<em>生成无条件样本（generating unconditional samples）</em>）——也可以给它一个提示（prompt），让它围绕某个主题来写（即生成<em>交互式条件样本（interactive conditional samples）</em>）。信口开河的情形下，我们只需递给它起始 token，让它开始生成词（训练好的模型用 <code>&lt;|endoftext|&gt;</code> 作为起始 token。我们这里就叫它 <code>&lt;s&gt;</code> 吧）。</p>
+<div class="img-div-any-width" markdown="1">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-simple-output-2.gif"/>
+  <br />
+</div>
+
+<p>模型只有一个输入 token，所以只有那一条路径是活跃的。该 token 逐层流过所有层，然后沿该路径产出一个向量。这个向量可以与模型的词表（模型认识的所有词，GPT-2 是 50,000 个词）做匹配打分。这个例子里我们选了概率最高的 token：'the'。但当然可以让结果更多样——你一定有过这种体验：键盘应用里一直点它建议的词，有时会陷入重复循环，唯一的出路是去点第二或第三个建议词。这里也一样。GPT-2 有个叫 top-k 的参数，可以让模型考虑从最高分词以外的词中采样（top-k = 1 就是只取最高分词的情形）。</p>
+<p>下一步，我们把第一步的输出加入输入序列，让模型做下一个预测：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt-2-simple-output-3.gif"/>
+  <br />
+</div>
+
+<p>注意，这次计算中只有第二条路径是活跃的。GPT-2 的每一层都保留了自己对第一个 token 的解读，并在处理第二个 token 时使用它（关于自注意力我们后面会更详细地讨论）。GPT-2 不会在看到第二个 token 后重新解读第一个 token。</p>
+<h3 id="更深入地看内部">更深入地看内部</h3>
+<h4 id="输入编码">输入编码</h4>
+<p>让我们看得更细一点，更亲密地了解这个模型。从输入开始。和之前讨论过的其他 NLP 模型一样，模型会在自己的嵌入矩阵中查找输入词的嵌入——这也是我们得到的训练好模型的组件之一。</p>
+<div class="img-div" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-token-embeddings-wte-2.png"/>
+  <br />
+  每一行是一个词嵌入：一串代表某个词、并捕捉其部分含义的数字。这个列表的长度在不同规格的 GPT2 中不同。最小的模型每个词/token 使用 768 维的嵌入。
+</div>
+
+<p>所以一开始，我们在嵌入矩阵中查找起始 token <code>&lt;s&gt;</code> 的嵌入。在把它交给模型的第一个 Block 之前，还要加上位置编码——一个向 Transformer Block 表明序列中词序的信号。训练好模型的组件中还有一个矩阵，其中包含输入 1024 个位置中每个位置的 position encoding 向量。</p>
+<div class="img-div" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-positional-encoding.png"/>
+  <br />
+</div>
+
+<p>到这里，输入词在交给第一个 Transformer Block 之前如何被处理，我们就讲完了。我们也认识了构成训练好的 GPT-2 的两个权重矩阵。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-input-embedding-positional-encoding-3.png"/>
+  <br />
+  把一个词送进第一个 Transformer Block，意味着查出它的嵌入，再加上位置 #1 的位置编码向量。
+</div>
+
+<h4 id="沿栈而上">沿栈而上</h4>
+<p>第一个 Block 现在可以处理这个 token 了：先经过自注意力过程，再经过它自己的神经网络层。第一个 Transformer Block 处理完 token 后，把得到的向量沿栈向上发送，交给下一个 Block 处理。每个 Block 的过程完全相同，但每个 Block 在自注意力和神经网络子层中都拥有自己的权重。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-transformer-block-vectors-2.png"/>
+  <br />
+</div>
+
+<h4 id="自注意力回顾">自注意力回顾</h4>
+<p>语言高度依赖上下文。比如，看机器人第二定律：</p>
+<blockquote class='subtle'>
+
+<p><strong>机器人第二定律</strong><br /> 机器人必须服从人类给出的命令，<strong style="color:#D81B60">这些命令</strong>与<strong style="color:#6D4C41">第一定律</strong>相冲突时除外。</p>
+</blockquote>
+
+<p>我在句子中标出了三处用词指代其他词句的地方。不理解它们所指的内容，就无法理解或处理这些词。模型处理这个句子时，必须知道：</p>
+<ul>
+<li><strong style="color:#D81B60">it</strong>（它，原文中"given it by human beings"，指机器人）指的是机器人</li>
+<li><strong style="color:#689F38">such orders</strong>（这些命令）指代这一定律的前半部分，即"人类给出的命令"</li>
+<li><strong style="color:#6D4C41">The First Law</strong>（第一定律）指的是整条第一定律</li>
+</ul>
+<p>这正是自注意力做的事。在处理某个词（把它送进神经网络）之前，它把模型对相关词和关联词——那些解释该词上下文的词——的理解"烤"进这个词的表示里。做法是为段落中每个词的相关程度打分，然后按其向量表示加权求和。</p>
+<p>举个例子，顶层 Block 的这个自注意力层在处理单词 "it" 时，注意力正落在 "a robot" 上。它将传给神经网络的向量，是这三个词的向量分别乘以各自分数之后的和。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-example-2.png"/>
+  <br />
+</div>
+
+<h4 id="自注意力过程">自注意力过程</h4>
+<p>自注意力沿着段落中每个 token 的路径进行。关键的组件是三个向量：</p>
+<ul>
+<li><span class="decoder">Query（查询）</span>：query 是当前词的一种表示，用来与所有其他词（用它们的 key）做匹配打分。我们只关心当前正在处理的 token 的 query。</li>
+<li><span class="context">Key（键）</span>：key 向量就像段落中所有词的标签。我们在寻找相关词时，就是拿 query 去和它们匹配。</li>
+<li><span class="step_no">Value（值）</span>：value 向量才是词的实际表示。一旦我们给每个词的相关程度打了分，加权求和来代表当前词所用的，就是这些值。</li>
+</ul>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/self-attention-example-folders-3.png"/>
+  <br />
+</div>
+
+<p>一个粗糙的类比：把它想象成在文件柜里翻资料。query 像一张写着研究主题的便利贴；keys 像柜中各个文件夹的标签。当标签和便利贴匹配上，你就取出那个文件夹的内容——内容就是 value 向量。只不过你要的不只是一个值，而是来自多个文件夹、按不同比例混合的一揽子值。</p>
+<p>把 query 向量与每个 key 向量相乘，就得到每个文件夹的分数（技术上：先点积，再 softmax）。</p>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/self-attention-example-folders-scores-3.png"/>
+  <br />
+</div>
+
+<p>把每个 value 乘上它的分数再求和——就得到了我们的自注意力输出。</p>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-value-vector-sum.png"/>
+  <br />
+</div>
+
+<p>这个按权重混合 value 向量得到的向量，相当于把它的 50%"注意力"给了词 <code>robot</code>，30% 给了词 <code>a</code>，19% 给了词 <code>it</code>。文章后面我们会更深入地讲自注意力。不过现在，先继续沿着栈向上，走向模型的输出。</p>
+<h4 id="模型输出">模型输出</h4>
+<p>当模型的顶层 Block 产出它的输出向量（自身自注意力再接自身神经网络的结果）后，模型把该向量乘以嵌入矩阵。</p>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-output-projection-2.png"/>
+  <br />
+</div>
+
+<p>回想一下：嵌入矩阵的每一行对应模型词表中某个词的嵌入。这次乘法的结果，就被解读为模型词表中每个词的分数。</p>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-output-scores-2.png"/>
+  <br />
+</div>
+
+<p>我们可以简单地选分数最高的 token（top_k = 1）。但如果让模型也考虑其他词，结果会更好。更好的策略是：把分数当作选中概率，从整个列表中进行采样（分数越高的词被选中的可能性越大）。折中的做法是把 top_k 设为 40，让模型只考虑分数最高的 40 个词。</p>
+<div class="img-div-any-size" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-output.png"/>
+  <br />
+</div>
+
+<p>这样，模型就完成了一次迭代，输出了一个词。模型会不断迭代，直到生成满整个上下文（1024 个 token），或直到产生一个结束序列（end-of-sequence）的 token。</p>
+<h3 id="第-1-部分结束gpt-2隆重登场">第 1 部分结束：GPT-2，隆重登场</h3>
+<p>讲完了。这就是 GPT2 的工作原理。如果你好奇自注意力层内部到底发生了什么，下面的附加部分就是为你准备的。我创建它是为了引入更多描述自注意力的视觉语言，方便日后检视和描述后续的 Transformer 模型（说的就是你，TransformerXL 和 XLNet）。</p>
+<p>我想说明本文的几处过度简化：</p>
+<ul>
+<li>我把"词（words）"和"token"混着用。但实际上，GPT2 使用 Byte Pair Encoding（BPE）来构造其词表中的 token，这意味着 token 通常是词的一部分。</li>
+<li>我们展示的例子运行在 GPT2 的推理/评估模式，所以它一次只处理一个词。训练时，模型面对的是更长的文本序列，会同时处理多个 token。另外训练时的批量大小（batch size）更大（512），而评估时批量大小为 1。</li>
+<li>为了更好安排插图版面，我对一些向量做了旋转/转置。实际实现时必须更严谨。</li>
+<li>Transformer 大量使用层归一化（layer normalization），这相当重要。我们在 The Illustrated Transformer 里提到了一些，但本文把重点放在了自注意力上。</li>
+<li>有时我需要用更多方框表示一个向量。我会用"放大"来表示。例如：</li>
+</ul>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/zoom-in.png"/>
+  <br />
+</div>
+
+<h2 id="第-2-部分图解自注意力-">第 2 部分：图解自注意力 <a name="part-2-illustrated-self-attention" href="#part-2-illustrated-self-attention">#</a></h2>
+<p>文章前面我们展示过这张图，演示某个层在处理单词 <code>it</code> 时应用自注意力的情形：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-1-2.png"/>
+  <br />
+</div>
+
+<p>本节我们来看它具体是怎么做到的。注意，我们的讲法尽量让它对单个词讲得通。所以我们会画很多单个的向量。实际实现是把巨大的矩阵相乘。但我想在这里聚焦"词级别"上发生了什么背后的直觉。</p>
+<h3 id="自注意力不带掩码">自注意力（不带掩码）</h3>
+<p>我们先看在编码器 Block 中计算的最初的自注意力。假设有一个一次只能处理 4 个 token 的玩具 Transformer Block。</p>
+<p>自注意力通过三个主要步骤完成：</p>
+<ol type="1">
+<li>为每条路径创建 Query、Key 和 Value 向量。</li>
+<li>对每个输入 token，用它的 query 向量与所有其他 key 向量做匹配打分。</li>
+<li>把 value 向量乘上各自分数后求和。</li>
+</ol>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/self-attention-summary.png"/>
+  <br />
+</div>
+
+<h3 id="1--创建-querykey-和-value-向量">1- 创建 Query、Key 和 Value 向量</h3>
+<p>我们聚焦第一条路径。拿它的 query 去和所有 key 比较，每个 key 得到一个分数。自注意力的第一步，是为每条 token 路径计算这三个向量（暂时先不管注意力头）：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/self-attention-1.png"/>
+  <br />
+</div>
+
+<h3 id="2--打分">2- 打分</h3>
+<p>现在向量都有了，第 2 步只用到 query 和 key 向量。由于我们关注的是第一个 token，把它的 query 乘以所有其他 key 向量，四个 token 各得到一个分数。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/self-attention-2.png"/>
+  <br />
+</div>
+
+<h3 id="3--求和">3- 求和</h3>
+<p>现在可以把分数乘以 value 向量。分数高的 value，在我们求和后得到的向量中占比就大。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/self-attention-3-2.png"/>
+  <br />
+  分数越低，我们把对应的 value 向量画得越"透明"。这是为了表示乘一个小数会稀释向量中的数值。
+</div>
+
+<p>对每条路径都做同样的运算，我们就得到了代表每个 token、且包含该 token 所需上下文的向量。它们随后被交给 Transformer Block 中的下一个子层（前馈神经网络）：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/self-attention-summary.png"/>
+  <br />
+</div>
+
+<h3 id="图解掩码自注意力">图解掩码自注意力</h3>
+<p>看完了 Transformer 自注意力步骤的内部，接下来看掩码自注意力。掩码自注意力与自注意力完全相同，只是第 2 步有差别。假设模型只有两个 token 作为输入，我们在观察第二个 token。这时最后两个 token 要被掩码，所以模型会在打分步骤中进行干预：它始终把未来 token 打成 0 分，让模型无法偷看未来的词：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/xlnet/masked-self-attention-2.png"/>
+  <br />
+</div>
+
+<p>这个掩码通常实现为一个称为注意力掩码（attention mask）的矩阵。设想一个四词序列（例如 "robot must obey orders"）。在语言建模场景下，这个序列会被分四步吸收——每个词一步（暂时假设每个词就是一个 token）。由于这类模型按批（batch）工作，我们可以假设这个玩具模型的批量大小为 4，把整个序列（含它的四个步骤）当作一批来处理。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/transformer-decoder-attention-mask-dataset.png"/>
+  <br />
+</div>
+
+<p>以矩阵形式，我们用 queries 矩阵乘以 keys 矩阵来计算分数。我们可以这样可视化，只不过每个格子里不是词，而是与该词关联的 query（或 key）向量：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/queries-keys-attention-mask.png"/>
+  <br />
+</div>
+
+<p>乘法完成后，我们把注意力掩码的"三角"盖上去。把需要掩码的格子设为 -inf 或一个很大的负数（比如 GPT2 中的 -10 亿）：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/transformer-attention-mask.png"/>
+  <br />
+</div>
+
+<p>然后对每行做 softmax，得到自注意力真正使用的分数：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/transformer-attention-masked-scores-softmax.png"/>
+  <br />
+</div>
+
+<p>这张分数表的含义是：</p>
+<ul>
+<li>当模型处理数据集中的第一个样本（第 #1 行），它只包含一个词（"robot"），模型的注意力将 100% 落在这个词上。</li>
+<li>当模型处理数据集的第二个样本（第 #2 行），包含两个词（"robot must"），在处理 "must" 时，48% 的注意力在 "robot" 上，52% 在 "must" 上。</li>
+<li>以此类推</li>
+</ul>
+<h3 id="gpt-2-的掩码自注意力">GPT-2 的掩码自注意力</h3>
+<p>让我们更深入地看 GPT-2 的掩码注意力。</p>
+<h4 id="评估时刻一次处理一个-token">评估时刻：一次处理一个 Token</h4>
+<p>我们可以让 GPT-2 完全按掩码自注意力的方式运行。但在评估阶段，模型每次迭代只新增一个词，此时沿着较早路径重新计算已处理 token 的自注意力是很低效的。</p>
+<p>这种情况下，我们先处理第一个 token（暂时忽略 <code>&lt;s&gt;</code>）。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-qkv-1-2.png"/>
+  <br />
+</div>
+
+<p>GPT-2 会保存 <code>a</code> 这个 token 的 key 和 value 向量。每个自注意力层都保留它自己为该 token 计算的 key 和 value 向量：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-qkv-2-2.png"/>
+  <br />
+</div>
+
+<p>下一次迭代，当模型处理 <code>robot</code> 一词时，不需要再为 <code>a</code> 这个 token 生成 query、key 和 value，直接复用第一次迭代保存下来的即可：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-qkv-3-2.png"/>
+  <br />
+</div>
+
+<h4 id="gpt-2-自注意力1--创建-querykey-和-value">GPT-2 自注意力：1- 创建 query、key 和 value</h4>
+<p>假设模型正在处理单词 <code>it</code>。如果看最底层的 Block，那么该 token 的输入就是 <code>it</code> 的嵌入 + 第 9 个位置的位置编码：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-1.png"/>
+  <br />
+</div>
+
+<p>Transformer 的每个 Block 都有自己的权重（下文会更细地拆解）。我们遇到的第一个，就是用来创建 query、key 和 value 的权重矩阵。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-2.png"/>
+  <br />
+  自注意力把自己输入乘以它的权重矩阵（并加上一个偏置向量，这里没有画出来）。
+</div>
+
+<p>相乘得到一个向量，实质上就是 <code>it</code> 一词的 query、key 和 value 向量的拼接。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-3.png"/>
+  <br />
+  输入向量乘以注意力权重向量（随后再加一个偏置向量），得到该 token 的 key、value 和 query 向量。
+</div>
+
+<h4 id="gpt-2-自注意力15--拆分为注意力头">GPT-2 自注意力：1.5- 拆分为注意力头</h4>
+<p>在之前的例子里，我们直接进入自注意力，忽略了"多头"部分。现在有必要把这个概念讲清楚。自注意力会在 Q、K、V 向量的不同部分上分别执行多次。"拆分"注意力头其实就是把这个长向量 reshape 成一个矩阵。小 GPT2 有 12 个注意力头，所以那就是 reshape 后矩阵的第一维：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-split-attention-heads-1.png"/>
+  <br />
+</div>
+
+<p>在之前的例子里，我们看过单个注意力头内部发生了什么。把多头想象成这样未尝不可（假设只可视化 12 个注意力头中的 3 个）：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-split-attention-heads-2.png"/>
+  <br />
+</div>
+
+<h4 id="gpt-2-自注意力2--打分">GPT-2 自注意力：2- 打分</h4>
+<p>现在可以进入打分环节——记住我们只观察其中一个注意力头（其余的头都在做同样的运算）：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-scoring.png"/>
+  <br />
+</div>
+
+<p>现在这个 token 可以和所有其他 token 的 key（在之前迭代中由注意力头 #1 算出的）做匹配打分：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-scoring-2.png"/>
+  <br />
+</div>
+
+<h4 id="gpt-2-自注意力3--求和">GPT-2 自注意力：3- 求和</h4>
+<p>和前面看到的一样，把每个 value 乘上它的分数再求和，得到注意力头 #1 的自注意力结果：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-multihead-sum-1.png"/>
+  <br />
+</div>
+
+<h4 id="gpt-2-自注意力35--合并注意力头">GPT-2 自注意力：3.5- 合并注意力头</h4>
+<p>处理各个注意力头的方式是：先把它们拼接成一个向量：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-merge-heads-1.png"/>
+  <br />
+</div>
+
+<p>但这个向量还不能马上交给下一个子层。我们得先把这个"弗兰肯斯坦"式的隐藏状态拼合体变成一个规整统一的表示。</p>
+<h4 id="gpt-2-自注意力4--投影">GPT-2 自注意力：4- 投影</h4>
+<p>我们让模型自己学会如何把拼接后的自注意力结果最好地映射为一个前馈神经网络可以处理的向量。这是我们遇到的第二个大权重矩阵，它把各注意力头的结果投影为自注意力子层的输出向量：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-project-1.png"/>
+  <br />
+</div>
+
+<p>这样，我们就得到了可以送往下一层的向量：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-self-attention-project-2.png"/>
+  <br />
+</div>
+
+<h4 id="gpt-2-全连接神经网络第-1-层">GPT-2 全连接神经网络：第 1 层</h4>
+<p>全连接神经网络是这个 Block 在自注意力把合适的上下文纳入 token 表示之后，对该 token 进行处理的地方。它由两层组成。第一层的规模是模型维度的 4 倍（GPT2 small 是 768，所以这个网络有 768*4 = 3072 个单元）。为什么是 4 倍？这只是原始 Transformer 采用的配置（那个模型维度是 512，第 1 层是 2048）。这似乎给了 Transformer 模型足够的表示容量，足以应对迄今丢给它的各种任务。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-mlp1.gif"/>
+  <br />
+  （未画出：一个偏置向量）
+</div>
+
+<h4 id="gpt-2-全连接神经网络第-2-层---投影回模型维度">GPT-2 全连接神经网络：第 2 层 - 投影回模型维度</h4>
+<p>第二层把第一层的结果投影回模型维度（小 GPT2 是 768）。这次乘法的结果，就是这个 Transformer Block 对该 token 的输出。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-mlp-2.gif"/>
+  <br />
+  （未画出：一个偏置向量）
+</div>
+
+<h3 id="你成功做到了it">你成功做到了！<span style="color:#7F34AA">It</span>！</h3>
+<p>这是我们讲到最细粒度的 Transformer Block！你现在已经掌握了 Transformer 语言模型内部绝大部分图景。回顾一下，我们勇敢的输入向量会遇到这些权重矩阵：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-transformer-block-weights-2.png"/>
+  <br />
+</div>
+
+<p>每个 Block 都有自己的一套这样的权重。另一方面，模型整体只有一个 token 嵌入矩阵和一个位置编码矩阵：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-weights-2.png"/>
+  <br />
+</div>
+
+<p>如果你想看模型的所有参数，我这里做了汇总：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/gpt2-117-parameters.png"/>
+  <br />
+</div>
+
+<p>不知为何，这些加起来是 1.24 亿参数，而不是 1.17 亿。我不确定原因，但公开的代码里看起来确实这么多（如果有误请指正）。</p>
+<h2 id="第-3-部分超越语言建模-">第 3 部分：超越语言建模 <a href="#part-3-beyond-language-modeling" name="part-3-beyond-language-modeling">#</a></h2>
+<p>仅解码器的 Transformer 在语言建模之外不断展现出潜力。已有大量成功应用，都可以用与上文类似的视觉语言来描述。我们用几个这样的应用来为本文收尾。</p>
+<h3 id="机器翻译">机器翻译</h3>
+<p>做翻译并不一定要有编码器。同样的任务也可以交给仅解码器的 Transformer：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/decoder-only-transformer-translation.png"/>
+  <br />
+</div>
+
+<h3 id="摘要">摘要</h3>
+<p>这正是第一个仅解码器 Transformer 被训练来做的任务。具体来说，它被训练来阅读一篇维基百科条目（不含目录之前的开头章节），并为其写摘要。条目的真实开头章节被用作训练数据集的标签：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/wikipedia-summarization.png"/>
+  <br />
+</div>
+
+<p>论文用维基百科条目训练模型，因此训练好的模型能够给条目写摘要：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/decoder-only-summarization.png"/>
+  <br />
+</div>
+
+<h3 id="迁移学习">迁移学习</h3>
+<p>在 <a href="https://arxiv.org/abs/1905.08836">Sample Efficient Text Summarization Using a Single Pre-Trained Transformer</a> 中，一个仅解码器的 Transformer 先做语言建模预训练，再微调到摘要任务。结果显示，在小数据场景下它比预训练的编码器-解码器 Transformer 效果更好。</p>
+<p>GPT2 论文也展示了在语言建模预训练之后做摘要的结果。</p>
+<h3 id="音乐生成">音乐生成</h3>
+<p><a href="https://magenta.tensorflow.org/music-transformer">Music Transformer</a> 用仅解码器的 Transformer 生成具有富有表现力的节奏与力度的音乐。"音乐建模"和语言建模是一回事——让模型以无监督的方式学习音乐，然后让它采样输出（就是我们前面说的"信口开河"）。</p>
+<p>你可能好奇这种情况下音乐是如何表示的。记住，语言建模既可以用字符的向量表示，也可以用词、或词的一部分（token）来做。对于一次钢琴演奏（先想想钢琴），我们要表示音符，还要表示力度（velocity）——琴键被按下力度的度量。</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/music-transformer-performance-encoding-3.png"/>
+  <br />
+</div>
+
+<p>一次演奏就是这样一串 one-hot 向量。一个 midi 文件可以转换成这种格式。论文中有如下示例输入序列：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/music-representation-example.png"/>
+  <br />
+</div>
+
+<p>这段输入序列的 one-hot 向量表示将是这样：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/music-transformer-input-representation-2.png"/>
+  <br />
+</div>
+
+<p>我特别喜欢论文中展示 Music Transformer 自注意力的一幅图。我在这里给它加了些标注：</p>
+<div class="img-div-any-width" markdown="0">
+  <image src="https://jalammar.github.io/images/gpt2/music-transformer-self-attention-2.png"/>
+  <br />
+  "图 8：这首乐曲有一个反复出现的三角形轮廓。query 位于后面某个峰顶，它关注着峰顶上此前所有的高音，一直追溯到乐曲开头。"……"[图中]展示了一个 query（所有注意力线的源头）以及被关注的过往记忆（收到更高 softmax 概率的音符会被高亮）。注意力线的颜色对应不同的注意力头，线宽对应 softmax 概率的大小。"
+</div>
+
+<p>如果你对这种音符表示还不清楚，<a href="https://www.youtube.com/watch?v=ipzR9bhei_o">请看这个视频</a>。</p>
+<h2 id="结语">结语</h2>
+<p>我们对 GPT2 的探索，以及对它的"母体"模型——仅解码器 Transformer 的探索到此结束。希望读完本文，你对自注意力有了更清晰的理解，对 Transformer 内部在发生什么也更加了然于胸。</p>
+<h2 id="资源">资源</h2>
+<ul>
+<li>OpenAI 的 <a href="https://github.com/openai/gpt-2">GPT2 实现</a></li>
+<li>看看 <a href="https://huggingface.co/">Hugging Face</a> 的 <a href="https://github.com/huggingface/pytorch-transformers">pytorch-transformers</a> 库：除了 GPT2，它还实现了 BERT、Transformer-XL、XLNet 等前沿 Transformer 模型。</li>
+</ul>
+<h2 id="致谢">致谢</h2>
+<p>感谢 <a href="https://twitter.com/lukaszkaiser">Lukasz Kaiser</a>、<a href="https://www.cl.uzh.ch/de/people/team/compling/mmueller.html">Mathias Müller</a>、<a href="https://twitter.com/peterjliu">Peter J. Liu</a>、<a href="https://twitter.com/rsepassi">Ryan Sepassi</a> 和 <a href="https://www.linkedin.com/in/mohammad-saleh-39614224/">Mohammad Saleh</a> 对本文早期版本提供的反馈。</p>
+<p>有任何评论或勘误？请在 <a href="https://twitter.com/JayAlammar">@JayAlammar</a> 推特找我。</p>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --accent:#0b6bcb; --bg:#ffffff; --box:#f6f8fa; --border:#d8dee4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e6edf3; --muted:#9198a1; --accent:#6cb2f0; --bg:#0d1117; --box:#161b22; --border:#30363d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+         font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
+  header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
+  header.site-header .sub { color:var(--muted); font-size:.85rem; }
+  h1 { line-height:1.35; font-size:1.7rem; }
+  h2 { margin-top:2.2em; border-bottom:1px solid var(--border); padding-bottom:.2em; font-size:1.3rem; }
+  h3 { margin-top:1.8em; font-size:1.1rem; }
+  a { color: var(--accent); }
+  img, video { max-width:100%; height:auto; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
+  .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
+  figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
+  blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
+  pre { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; overflow-x:auto; }
+  code { background:var(--box); border-radius:4px; padding:.1em .3em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; margin:1em 0; }
+  td, th { border:1px solid var(--border); padding:.4em .7em; }
+  .post-list { list-style:none; padding:0; }
+  .post-list li { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .post-list .date { color:var(--muted); font-size:.85rem; }
+  .post-list a.title { font-size:1.15rem; font-weight:600; text-decoration:none; }
+  .post-list a.title:hover { text-decoration:underline; }
+  .post-list .orig { color:var(--muted); font-size:.85rem; }
+  .notice { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:.8em 1.1em; font-size:.92rem; color:var(--muted); }
+  .notice a { color:var(--muted); }
+  .post-meta { color:var(--muted); font-size:.9rem; margin-bottom:1em; }
+  .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .site-footer .badge img { display:inline-block; }
+  .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
+  /* 与原文风格一致的术语着色 */
+  .post-body .encoder { color:#4e9c2c; }
+  .post-body .decoder { color:#a04fd0; }
+  .post-body .context { color:#e07f10; }
+  .post-body .embedding { color:#00882B; }
+  .post-body .step_no { color:#2596c8; }
+  .post-body .ffnn { color:#d9453d; }
+  .post-body .logits_output { color:#cf4a80; }
+  @media (prefers-color-scheme: dark) {
+    .post-body .encoder { color:#8fd462; }
+    .post-body .decoder { color:#c98be8; }
+    .post-body .context { color:#f5a84d; }
+    .post-body .embedding { color:#4cd07d; }
+    .post-body .step_no { color:#6cc3ef; }
+    .post-body .ffnn { color:#f2837d; }
+    .post-body .logits_output { color:#ef8cb4; }
+  }
+</style>
+<title>图解 Stable Diffusion | Jay Alammar 博客中文翻译</title>
+</head>
+<body>
+<div class="wrap">
+<header class="site-header">
+  <a class="brand" href="./index.html">Jay Alammar 博客 · 简体中文翻译</a>
+  <div class="sub">原文作者 Jay Alammar（jalammar.github.io / languagemodels.co）· 译文按 CC BY-NC-SA 4.0 共享</div>
+</header><p class="backlink"><a href="../index.html">← 返回文章列表</a></p>
+<h1>图解 Stable Diffusion</h1>
+<p class="post-meta">原文：The Illustrated Stable Diffusion · 2022-10-04 ·
+  <a href="https://jalammar.github.io/illustrated-stable-diffusion/">阅读原文</a></p>
+<div class="notice">
+  本文由社区翻译，原文 <a href="https://jalammar.github.io/illustrated-stable-diffusion/">The Illustrated Stable Diffusion</a> 作者是
+  <a href="https://jalammar.github.io">Jay Alammar</a>（来源：jalammar.github.io）。
+  原文与本文译文均按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；
+  译文力求忠实，如有出入以原文为准，翻译错误由本站负责。
+</div><article class="post-body"><p>(<strong>2022 年 11 月 V2</strong>：更新了若干图片，以更准确地描述前向扩散过程；本版还增加了几张图)</p>
+<p>AI 图像生成是近期最让人们（包括我）大开眼界的 AI 能力。从文字描述创造出生动画面，这种能力有一种魔力，也清晰地指向人类创作艺术方式的转变。<a href="https://stability.ai/blog/stable-diffusion-public-release">Stable Diffusion</a> 的发布是这一浪潮中一座明显的里程碑，因为它把一个高性能模型送到了大众手中（这个"性能"既指图像质量，也指速度和相对较低的资源/内存要求）。</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/MXmacOUJUaw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" style="
+ width: 100%;
+ max-width: 560px;" allowfullscreen></iframe>
+
+<p>玩了一会儿 AI 图像生成之后，你可能会开始好奇它是如何工作的。</p>
+<p>这是一篇关于 Stable Diffusion 工作原理的轻松入门。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-text-to-image.png" />
+  <br />
+
+</div>
+
+<p>Stable Diffusion 很全能，可以用在很多不同的玩法上。我们先聚焦最基础的"仅从文字生成图像"（text2img）。上图展示了一个文字输入的示例及生成的图像（完整的原始提示词见这里）。除了文生图，它的另一个主要用法是让它修改图像（即输入为文字 + 图像）。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-img2img-image-to-image.png" />
+  <br />
+
+</div>
+
+<p>我们来看看到它的引擎盖底下。这有助于理解各个组件、它们如何相互作用，以及图像生成的那些选项/参数到底意味着什么。</p>
+<h2 id="stable-diffusion-的组件">Stable Diffusion 的组件</h2>
+<p>Stable Diffusion 是一个由若干组件和模型组成的系统，并不是一个铁板一块的单一大模型。</p>
+<p>往内部看，我们能得到的第一个观察是：存在一个"文字理解"组件，它把文字信息翻译成一种数值表示，以捕捉文字中的含义。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-text-understanding-component-image-generation.png" />
+  <br />
+
+</div>
+
+<p>我们从一个高层次的视角出发，文章后面会进入更具体的机器学习细节。不过现在可以说：这个文本编码器是一个特殊的 Transformer 语言模型（技术上说：CLIP 模型的文本编码器）。它接收输入文本，输出文本中每个词/token 的数值表示列表（每个 token 一个向量）。</p>
+<p>这些信息随后被交给"图像生成器"，而图像生成器本身又由几个组件构成。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/Stable-diffusion-text-info-to-image-generator.png" />
+  <br />
+
+</div>
+
+<p>图像生成器分两个阶段：</p>
+<p>1- <strong>图像信息创造器（Image information creator）</strong></p>
+<p>这个组件是 Stable Diffusion 的独门秘方，相对此前模型的性能提升有很多就来自这里。</p>
+<p>它以多步迭代来生成图像信息。这就是 Stable Diffusion 界面和库里那个 <em>steps</em> 参数，通常默认为 50 或 100。</p>
+<p>图像信息创造器完全在<em>图像信息空间</em>（即<em>潜空间（latent）</em>）中工作，这后文会展开。这一特性使它比在像素空间工作的早期扩散模型更快。技术上说，这个组件由一个 UNet 神经网络和一个调度（scheduling）算法组成。</p>
+<p>"扩散（diffusion）"一词描述的就是这个组件里发生的事：信息一步一步地被加工，最终（由下一个组件，图像解码器）生成一张高质量图像。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/Stable-diffusion-image-generator-information-creator.png" />
+  <br />
+
+</div>
+
+<p>2- <strong>图像解码器（Image Decoder）</strong></p>
+<p>图像解码器根据信息创造器提供的信息"作画"。它在流程末尾只运行一次，产出最终的像素图像。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-cliptext-unet-autoencoder-decoder.png" />
+  <br />
+
+</div>
+
+<p>到这里，我们就看到了构成 Stable Diffusion 的三个主要组件（各自都有自己的神经网络）：</p>
+<ul>
+<li><p><strong>ClipText</strong>：文本编码。<br /> 输入：文本。<br /> 输出：77 个 token 嵌入向量，每个 768 维。</p></li>
+<li><p><strong>UNet + 调度器（Scheduler）</strong>：在信息（潜）空间中逐步加工/扩散信息。<br /> 输入：文本嵌入，以及一个由噪声构成的初始多维数组（结构化的数字列表，也叫<em>张量（tensor）</em>）。<br /> 输出：加工后的信息数组。</p></li>
+<li><p><strong>自编码器解码器（Autoencoder Decoder）</strong>：用加工后的信息数组画出最终图像。<br /> 输入：加工后的信息数组（维度：(4,64,64)） <br /> 输出：最终图像（维度：(3, 512, 512)，即（红/绿/蓝，宽，高））</p></li>
+</ul>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-components-and-tensors.png" />
+  <br />
+
+</div>
+
+<h2 id="话说扩散到底是什么">话说，扩散到底是什么？</h2>
+<p>扩散就是发生在粉色"图像信息创造器"组件内部的过程。它持有代表输入文本的 token 嵌入，以及一个随机的起始<em>图像信息数组</em>（也叫 <em>latents</em>），然后产出一个信息数组，供图像解码器绘制最终图像。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-diffusion-process.png" />
+  <br />
+
+</div>
+
+<p>这个过程一步一步地进行，每一步都加入更多相关信息。要建立对过程的直觉，我们可以检查一下那个随机的 latents 数组，看看它对应到的其实是一片视觉噪声。这里的"视觉检查"就是把它送进图像解码器看看。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-latent-space-pixel-space.png" />
+  <br />
+
+</div>
+
+<p>扩散分多步进行，每一步接收一个 latents 数组作为输入，产出另一个 latents 数组——它更接近输入文本，也更接近模型从其训练过的所有图像中学到的视觉信息。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-unet-steps.png" />
+  <br />
+
+</div>
+
+<p>我们可以把一系列 latents 可视化出来，看看每一步加入了什么信息。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-denoising-steps-latents.png" />
+  <br />
+
+</div>
+
+<p>这个过程看起来相当震撼。</p>
+<div class="img-div-any-width" markdown="0">
+<video height="auto" loop autoplay  controls>
+  <source src="https://jalammar.github.io/images/stable-diffusion/diffusion-steps-all-loop.webm" type="video/webm">
+  Your browser does not support the video tag.
+</video>
+</div>
+
+<p>这个例子里，第 2 步到第 4 步之间发生的事情特别迷人：轮廓仿佛从噪声中浮现出来。</p>
+<div class="img-div-any-width" markdown="0">
+<video height="auto" loop autoplay  controls>
+  <source src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-steps-2-4.webm" type="video/webm">
+  Your browser does not support the video tag.
+</video>
+</div>
+
+<h3 id="扩散的原理">扩散的原理</h3>
+<p>用扩散模型生成图像的核心思想，建立在"我们拥有强大的计算机视觉模型"这一事实上。只要有足够大的数据集，这些模型就能学会复杂的操作。扩散模型把图像生成问题重新表述为：</p>
+<p>假设我们有一张图像，我们生成一些噪声，把它加到图像上。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-forward-diffusion-training-example.png" />
+  <br />
+
+</div>
+这就成了一个训练样本。我们再用同样的公式生成大量训练样本，来训练我们图像生成模型的核心组件。 
+
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-forward-diffusion-training-example-2.png" />
+  <br />
+
+</div>
+
+<p>这个例子展示的加噪幅度是从原图（幅度 0，无噪声）到完全噪声（幅度 4，全是噪声）的几个值。我们可以精确控制给图像加多少噪声，因此可以把噪声幅度铺开到几十步上，为训练集中的每张图像造出几十个训练样本。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-u-net-noise-training-examples-2.png" />
+  <br />
+
+</div>
+
+<p>有了这个数据集，我们就可以训练"噪声预测器"，得到一个出色的噪声预测器——以某种特定配置运行时，它竟然能创造出图像。如果你有机器学习经验，下面这个训练步骤应该不陌生：</p>
+<div class="img-div" markdown="0">
+<a href="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-u-net-noise-training-step.png">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-u-net-noise-training-step.png" />
+  </a><br />
+
+</div>
+
+<p>接下来看看它如何用来生成图像。</p>
+<h3 id="靠去噪来作画">靠去噪来作画</h3>
+<p>训练好的噪声预测器可以接收一张带噪声的图像和去噪步的步数，预测出一片噪声。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-denoising-step-1v2.png" />
+  <br />
+
+</div>
+
+<p>预测这片噪声的目标是：把它从图像中减掉后，得到的图像更接近模型训练时所见过的那些图像——不是精确的某些图，而是那个<em>分布</em>：天空通常是蓝的、地面在天上之下、人有两只眼睛、猫是某种模样（尖耳朵、一脸"不过如此"）的像素排列世界。</p>
+<div class="img-div" markdown="0">
+  <a href="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-denoising-step-2v2.png"><img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-denoising-step-2v2.png" /></a>
+  <br />
+
+</div>
+
+<p>如果训练数据集是审美上令人愉悦的图像（例如 Stable Diffusion 所用的 <a href="https://laion.ai/blog/laion-aesthetics/">LAION Aesthetics</a>），那么生成的图像就会倾向于同样赏心悦目。如果我们在 logo 图上训练，就会得到一个 logo 生成模型。</p>
+<div class="img-div" markdown="0">
+<a href="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-image-generation-v2.png">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-image-generation-v2.png" />
+</a>
+  <br />
+
+</div>
+
+<p>至此，扩散模型生成图像的描述就基本完成了，主要内容来自 <a href="https://arxiv.org/abs/2006.11239">Denoising Diffusion Probabilistic Models</a>。有了这套对扩散的直觉，你不只是理解了 Stable Diffusion——Dall-E 2 和 Google 的 Imagen 的主要组件你也懂了。</p>
+<p>注意：到目前为止我们描述的扩散过程完全没用任何文本数据。也就是说，直接部署这个模型，它能生成好看的图像，但我们无法控制它生成的是金字塔还是猫。下一节我们说明如何把文本纳入这个过程，以控制模型生成什么类型的图像。</p>
+<h2 id="提速在压缩潜数据而不是像素图像上做扩散">提速：在压缩（潜）数据而不是像素图像上做扩散</h2>
+<p>为了加快图像生成过程，Stable Diffusion 论文把扩散过程不是放在像素图像上跑，而是放在图像的压缩版本上跑。<a href="https://arxiv.org/abs/2112.10752">论文</a>称之为"迈向潜空间（Departure to Latent Space）"。</p>
+<p>这个压缩（以及之后的解压/作画）通过自编码器（autoencoder）完成。自编码器用编码器把图像压缩进潜空间，再仅凭压缩后的信息用解码器重建图像。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-autoencoder.png" />
+  <br />
+
+</div>
+
+<p>现在前向扩散过程在压缩后的 latents 上进行。预测的"噪声片"是施加在这些 latents 上的噪声，而不是像素图像上的噪声。所以噪声预测器实际上是在压缩表示（潜空间）中学会预测噪声的。</p>
+<div class="img-div" markdown="0">
+<a href="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-latent-forward-process-v2.png">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-latent-forward-process-v2.png" />
+</a>
+  <br />
+
+</div>
+
+<p>前向过程（用自编码器的编码器）是我们为噪声预测器生成训练数据的方式。训练好之后，我们就能通过运行逆过程（用自编码器的解码器）来生成图像。</p>
+<div class="img-div" markdown="0">
+<a href="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-forward-and-reverse-process-v2.png">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-forward-and-reverse-process-v2.png" />
+</a>
+  <br />
+
+</div>
+
+<p>这两条流程，就是 LDM/Stable Diffusion 论文图 3 所展示的内容：</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/article-Figure3-1-1536x762.png" />
+  <br />
+
+</div>
+
+<p>这张图还画出了"条件化（conditioning）"组件，在本例中即描述"模型应该生成什么样的图像"的文本提示。那我们来研究一下文本部分。</p>
+<h3 id="文本编码器一个-transformer-语言模型">文本编码器：一个 Transformer 语言模型</h3>
+<p>语言理解组件用的是一个 Transformer 语言模型：接收文本提示，产出 token 嵌入。发布的 Stable Diffusion 模型使用 ClipText（一个 <a href="illustrated-gpt2.html">基于 GPT 的模型</a>），而论文用的是 <a href="illustrated-bert.html">BERT</a>。</p>
+<p>语言模型的选型有多重要，Imagen 论文给出了证明：换上更大的语言模型，对生成图像质量的影响，比加大图像生成组件还大。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/text-language-models-clip-image-generation.png" />
+  <br />
+
+<p>更大/更好的语言模型对图像生成模型的质量影响显著。来源：<a href="https://arxiv.org/abs/2205.11487">Google Imagen 论文（Saharia et. al.）</a>，图 A.5。</p>
+</div>
+
+<p>早期的 Stable Diffusion 模型直接接上了 OpenAI 发布的预训练 ClipText 模型。未来的模型有可能改用新发布的、大得多的 <a href="https://laion.ai/blog/large-openclip/">OpenCLIP</a> CLIP 变体（2022 年 11 月更新：果然如此，<a href="https://stability.ai/blog/stable-diffusion-v2-release">Stable Diffusion V2 用上了 OpenClip</a>）。新一批模型的文本模型规模可达 3.54 亿参数，而 ClipText 只有 6300 万参数。</p>
+<h4 id="clip-是怎么训练的">CLIP 是怎么训练的</h4>
+<p>CLIP 在图像及其配文组成的数据集上训练。想象一个长这样的数据集，只不过它有 4 亿张图及其配文：</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/images-and-captions-dataset.png" />
+  <br />
+  一个由图像及其配文组成的数据集。
+</div>
+
+<p>实际上，CLIP 是在从网络爬取的图像及它们的 "alt" 标签上训练的。</p>
+<p>CLIP 是一个图像编码器加一个文本编码器的组合。它的训练过程可以简化理解为：取一张图和它的配文，分别用图像编码器和文本编码器编码。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/clip-training-step-1.png" />
+  <br />
+
+</div>
+
+<p>然后用余弦相似度比较得到的两个嵌入。训练开始时，哪怕文字正确地描述了图像，相似度也会很低。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/clip-training-step-2.png" />
+  <br />
+
+</div>
+
+<p>我们更新这两个模型，使下次再编码它们时，得到的嵌入彼此相似。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/clip-training-step-3.png" />
+  <br />
+
+</div>
+
+<p>在整个数据集上、用大批量重复这个过程，最终两个编码器就能产出这样的嵌入：一张狗的照片和"a picture of a dog"这句话是相似的。和 <a href="illustrated-word2vec.html">word2vec</a> 一样，训练过程还需要包含互不匹配的图像与配文的<strong>负样本</strong>，模型要给它们打很低的相似度分数。</p>
+<h2 id="把文本信息喂进图像生成过程">把文本信息喂进图像生成过程</h2>
+<p>要让文本成为图像生成过程的一部分，我们必须调整噪声预测器，让它把文本作为输入。</p>
+<div class="img-div" markdown="0">
+<a href="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-unet-inputs-v2.png">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-unet-inputs-v2.png" />
+  </a><br />
+
+</div>
+
+<p>我们的数据集现在包含了编码后的文本。由于我们工作在潜空间，输入图像和预测的噪声都处于潜空间中。</p>
+<div class="img-div" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-text-dataset-v2.png" />
+  <br />
+
+</div>
+
+<p>为了对 Unet 如何使用文本 token 有更具体的感受，我们钻进 Unet 内部看看。</p>
+<h3 id="unet-噪声预测器的层不含文本">Unet 噪声预测器的层（不含文本）</h3>
+<p>先看一个不使用文本的扩散 Unet。它的输入输出长这样：</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/unet-inputs-outputs-v2.png" />
+  <br />
+
+</div>
+
+<p>在里面我们可以看到：</p>
+<ul>
+<li>Unet 是一系列层，负责变换 latents 数组</li>
+<li>每一层都在上一层的输出上工作</li>
+<li>一些输出会通过残差连接（residual connections）馈入网络更后面的处理中</li>
+<li>时间步（timestep）被变换成一个时间步嵌入向量，各层用的就是这个向量</li>
+</ul>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/unit-resnet-steps-v2.png" />
+  <br />
+
+</div>
+
+<h3 id="unet-噪声预测器的层含文本">Unet 噪声预测器的层（含文本）</h3>
+<p>现在看看如何改造这套系统，让它能关注文本。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/unet-with-text-inputs-outputs-v2.png" />
+  <br />
+
+</div>
+
+<p>为支持文本输入（专业术语：文本条件化，text conditioning）所需的主要改动，是在 ResNet 块之间加一个注意力层。</p>
+<div class="img-div-any-width" markdown="0">
+  <img src="https://jalammar.github.io/images/stable-diffusion/unet-with-text-steps-v2.png" />
+  <br />
+
+</div>
+
+<p>注意，ResNet 块本身并不直接"看"文本。是注意力层把那些文本表示融进了 latents。随后的 ResNet 就能在自己的处理中利用这份已融入的文本信息。</p>
+<h2 id="结语">结语</h2>
+<p>希望本文给了你一个关于 Stable Diffusion 如何工作的良好直觉起点。它还牵涉许多其他概念，但我认为，一旦你熟悉了上面的这些积木，它们都会变得容易理解。下面列出的资源是我觉得很有用的下一步。如有任何勘误或反馈，请在 <a href="https://twitter.com/JayAlammar">Twitter</a> 上联系我。</p>
+<h2 id="资源">资源</h2>
+<ul>
+<li>我拍了一个<a href="https://youtube.com/shorts/qL6mKRyjK-0?feature=share">一分钟的 YouTube 短片</a>，演示用 <a href="https://beta.dreamstudio.ai/">Dream Studio</a> 以 Stable Diffusion 生成图像。</li>
+<li><a href="https://huggingface.co/blog/stable_diffusion">Stable Diffusion with 🧨 Diffusers</a></li>
+<li><a href="https://huggingface.co/blog/annotated-diffusion">The Annotated Diffusion Model</a></li>
+<li><a href="https://www.youtube.com/watch?v=J87hffSMB60">How does Stable Diffusion work? – Latent Diffusion Models EXPLAINED</a> [视频]</li>
+<li><a href="https://www.youtube.com/watch?v=ltLNYA3lWAQ">Stable Diffusion - What, Why, How?</a> [视频]</li>
+<li><a href="https://ommer-lab.com/research/latent-diffusion-models/">High-Resolution Image Synthesis with Latent Diffusion Models</a> [Stable Diffusion 论文]</li>
+<li>想要更深入地看算法与数学，请看 Lilian Weng 的 <a href="https://lilianweng.github.io/posts/2021-07-11-diffusion-models/">What are Diffusion Models?</a></li>
+<li>观看 fast.ai 的 <a href="https://www.youtube.com/watch?v=_7rMfsA24Ls&amp;ab_channel=JeremyHoward">精彩 Stable Diffusion 视频</a></li>
+</ul>
+<h2 id="致谢">致谢</h2>
+<p>感谢 Robin Rombach、Jeremy Howard、Hamel Husain、Dennis Soemers、Yan Sidyakin、Freddie Vargus、Anna Golubeva 以及 <a href="https://cohere.for.ai/">Cohere For AI</a> 社区对本文早期版本提供的反馈。</p>
+<h2 id="参与贡献">参与贡献</h2>
+<p>请帮我把这篇文章做得更好。可以这样做：</p>
+<ul>
+<li>通过 <a href="https://twitter.com/JayAlammar">Twitter</a> 或 <a href="https://github.com/jalammar/jalammar.github.io">Pull Request</a> 提出任何反馈或勘误</li>
+<li>为图示建议更易懂的说明文字和 alt-text，帮助更多人看懂这篇文章（最好以 pull request 提交）</li>
+<li>把它翻译成另一种语言并发布在你的博客上。把链接发给我，我会在这里加上链接。此前参与翻译的朋友们都说，把翻译做一遍之后，对这些概念的理解深刻得多。</li>
+</ul>
+<h2 id="讨论">讨论</h2>
+<p>如果你对图像生成模型与语言模型的交叉领域感兴趣，欢迎在 <a href="https://discord.gg/co-mmunity">Cohere Discord 社区</a>的 #images-and-words 频道发帖。我们在其中讨论各种交叉话题，包括：</p>
+<ul>
+<li>微调语言模型以生成好的图像生成提示词</li>
+<li>用 LLM 把图像描述提示词拆分为主体和风格两部分</li>
+<li>图生提示词（image-to-prompt，借助 <a href="https://colab.research.google.com/github/pharmapsychotic/clip-interrogator/blob/main/clip_interrogator.ipynb">Clip Interrogator</a> 之类的工具）</li>
+</ul>
+<h2 id="引用">引用</h2>
+<p>如果这项工作对你的研究有帮助，请按如下方式引用：</p>
+<div class="cite" markdown="1">
+
+<pre class="code"><code>@misc{alammar2022diffusion, 
+  title={The Illustrated Stable Diffusion},
+  author={Alammar, J},
+  year={2022},
+  url={https://jalammar.github.io/illustrated-stable-diffusion/}
+}</code></pre>
+</div>
+</article>
+<footer class="site-footer">
+  <p>本站为 Jay Alammar 博客文章的简体中文翻译合集，非官方站点，不用于商业用途。<br />
+  翻译与译文按 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可发布；原文版权归 Jay Alammar 所有，同样依 CC BY-NC-SA 4.0 发布。</p>
+  <p class="badge"><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+</footer>
+
+</div>
+</body>
+</html>
