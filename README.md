@@ -27,7 +27,7 @@ Jay Alammar（[jalammar.github.io](https://jalammar.github.io) / [Language Model
 original/en/      英文原文（博客仓库 Markdown 副本；Substack 文章为 HTML 转换的 Markdown），供校对译文用
 translation/zh/   简体中文译文 Markdown（站点的唯一内容来源，不带 front-matter）
 tools/build.py    构建脚本：pandoc 转换 + 模板 + 生成首页
-site/             构建产物（静态 HTML），部署时同步到 gh-pages 分支
+site/             构建产物（静态 HTML），不进入 main，发布时同步到 gh-pages 分支
 ```
 
 ## 本地构建
@@ -47,19 +47,21 @@ python3 -m http.server -d site 8000   # 本地预览 http://localhost:8000
 
 ## 部署（GitHub Pages → gh-pages 分支）
 
+`site/` 为构建产物，已被 .gitignore 忽略、不进入 main 分支；站点内容以 gh-pages 分支为准。
+
 ```bash
-python3 tools/build.py
-git add -A && git commit -m "..."        # 提交 main（源码）
-# 将 site/ 同步到 gh-pages 分支
-rm -rf /tmp/gh && git worktree add /tmp/gh gh-pages 2>/dev/null || \
-  git worktree add --orphan /tmp/gh gh-pages
-rsync -a --delete --exclude .git site/ /tmp/gh/
-git -C /tmp/gh add -A && git -C /tmp/gh commit -m "site update"
-git push origin main gh-pages
-git worktree remove /tmp/gh
+python3 tools/build.py                    # 生成 site/
+git add -A && git commit -m "..."         # 提交源码到 main
+# 把 site/ 发布到 gh-pages 分支（临时仓库方式，与本机 git 版本无关）
+rm -rf /tmp/gh-pages-jay && mkdir /tmp/gh-pages-jay && cd /tmp/gh-pages-jay
+git init -q -b gh-pages
+cp -r <repo>/site/* .
+git add -A && git commit -m "site update"
+git remote add origin git@github.com:CodingPracticeGroup/jay-alammar-blog-zh.git
+git push -f origin gh-pages
 ```
 
-然后在 GitHub 仓库 Settings → Pages 选择 `gh-pages` 分支、根目录作为发布来源（仅首次需要）。
+若尚未开启 Pages：仓库 Settings → Pages → Build and deployment，Source 选 `Deploy from a branch`，Branch 选 `gh-pages` / `/(root)`（仅首次需要）。可用 `gh api repos/CodingPracticeGroup/jay-alammar-blog-zh/pages --jq .status` 查询构建状态。
 
 ## 许可与出处
 
