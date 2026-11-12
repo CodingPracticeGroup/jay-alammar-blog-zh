@@ -14,12 +14,16 @@ Jay Alammar（[jalammar.github.io](https://jalammar.github.io) / [Language Model
 | 2025-01-27 | 图解 DeepSeek-R1 | The Illustrated DeepSeek-R1 |
 | 2022-10-04 | 图解 Stable Diffusion | The Illustrated Stable Diffusion |
 | 2022-01-03 | 图解检索增强 Transformer（RETRO） | The Illustrated Retrieval Transformer |
+| 2021-05-04 | 可解释 AI 速查表 | Explainable AI Cheat Sheet |
 | 2020-07-27 | GPT-3 是如何工作的——可视化与动画 | How GPT3 Works - Visualizations and Animations |
+| 2019-11-26 | BERT 初次使用可视化指南（句子分类实操） | A Visual Guide to Using BERT for the First Time |
 | 2019-08-12 | 图解 GPT-2 | The Illustrated GPT-2 |
 | 2019-03-27 | 图解 Word2vec | The Illustrated Word2vec |
 | 2018-12-03 | 图解 BERT、ELMo 等 | The Illustrated BERT, ELMo, and co. |
 | 2018-06-27 | 图解 Transformer | The Illustrated Transformer |
 | 2018-05-09 | 可视化神经机器翻译模型（Seq2seq 与 Attention） | Visualizing A Neural Machine Translation Model |
+| 2018-03-23 | 神经网络基础数学的可视化讲解（前向传播与激活函数） | A Visual And Interactive Look at Basic Neural Network Math |
+| 2016-12-14 | 神经网络基础概念的可视化入门（房价例子） | A Visual and Interactive Guide to the Basics of Neural Networks |
 
 说明：原仓库中另有一篇 `The Illustrated Gradient Descent`（内题 *How Machines Learn*），其 front-matter 为 `published: False`，即作者从未在博客上发布（对应 URL 返回 404），故未收录。
 

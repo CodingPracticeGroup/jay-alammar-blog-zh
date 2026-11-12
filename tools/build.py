@@ -53,6 +53,14 @@ POSTS = [
         "source": "jalammar.github.io",
     },
     {
+        "slug": "explainable-ai",
+        "date": "2021-05-04",
+        "title_en": "Explainable AI Cheat Sheet",
+        "title_zh": "可解释 AI 速查表",
+        "original_url": JALAMMAR_BASE + "/explainable-ai/",
+        "source": "jalammar.github.io",
+    },
+    {
         "slug": "illustrated-retrieval-transformer",
         "date": "2022-01-03",
         "title_en": "The Illustrated Retrieval Transformer",
@@ -69,6 +77,14 @@ POSTS = [
         "source": "jalammar.github.io",
     },
     {
+        "slug": "a-visual-guide-to-using-bert-for-the-first-time",
+        "date": "2019-11-26",
+        "title_en": "A Visual Guide to Using BERT for the First Time",
+        "title_zh": "BERT 初次使用可视化指南（句子分类实操）",
+        "original_url": JALAMMAR_BASE + "/a-visual-guide-to-using-bert-for-the-first-time/",
+        "source": "jalammar.github.io",
+    },
+    {
         "slug": "illustrated-gpt2",
         "date": "2019-08-12",
         "title_en": "The Illustrated GPT-2 (Visualizing Transformer Language Models)",
@@ -82,6 +98,14 @@ POSTS = [
         "title_en": "The Illustrated Word2vec",
         "title_zh": "图解 Word2vec",
         "original_url": JALAMMAR_BASE + "/illustrated-word2vec/",
+        "source": "jalammar.github.io",
+    },
+    {
+        "slug": "feedforward-neural-networks-visual-interactive",
+        "date": "2018-03-23",
+        "title_en": "A Visual And Interactive Look at Basic Neural Network Math",
+        "title_zh": "神经网络基础数学的可视化讲解（前向传播与激活函数）",
+        "original_url": JALAMMAR_BASE + "/feedforward-neural-networks-visual-interactive/",
         "source": "jalammar.github.io",
     },
     {
@@ -106,6 +130,14 @@ POSTS = [
         "title_en": "The Illustrated Transformer",
         "title_zh": "图解 Transformer",
         "original_url": JALAMMAR_BASE + "/illustrated-transformer/",
+        "source": "jalammar.github.io",
+    },
+    {
+        "slug": "visual-interactive-guide-basics-neural-networks",
+        "date": "2016-12-14",
+        "title_en": "A Visual and Interactive Guide to the Basics of Neural Networks",
+        "title_zh": "神经网络基础概念的可视化入门（房价例子）",
+        "original_url": JALAMMAR_BASE + "/visual-interactive-guide-basics-neural-networks/",
         "source": "jalammar.github.io",
     },
 ]
@@ -165,6 +197,11 @@ STYLE = """
   .site-footer { margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
   .site-footer .badge img { display:inline-block; }
   .backlink { font-size:.9rem; }
+  /* 原文双栏讲解块（神经元/激活函数图解） */
+  .neuron-expo { display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1.5em 0; }
+  .neuron-expo .small-column { flex:0 0 auto; }
+  .neuron-expo .small-column img { max-width:280px; }
+  .neuron-expo .side-column { flex:1; min-width:280px; }
   /* 与原文风格一致的术语着色 */
   .post-body .encoder { color:#4e9c2c; }
   .post-body .decoder { color:#a04fd0; }
