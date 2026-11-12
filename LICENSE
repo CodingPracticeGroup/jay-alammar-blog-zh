@@ -1,0 +1,25 @@
+# 内容许可 / Content License
+
+本仓库的文章译文（`translation/zh/` 及 `site/` 中的 HTML 内容）是 Jay Alammar 博客文章
+（The Illustrated 系列，原文发表于 https://jalammar.github.io 与
+https://newsletter.languagemodels.co）的中文衍生作品。
+
+原文与译文均按 Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+International（CC BY-NC-SA 4.0）许可发布：
+
+- Attribution（署名）：必须署名 Jay Alammar，并附向原文链接。
+- NonCommercial（非商业性使用）：不得将本作品主要用于商业目的。
+- ShareAlike（相同方式共享）：改编、翻译后的作品必须采用相同的 CC BY-NC-SA 4.0 许可。
+
+许可全文：<http://creativecommons.org/licenses/by-nc-sa/4.0/>
+
+Translation note: the original articles are © Jay Alammar, licensed under
+CC BY-NC-SA 4.0 as stated in the footer of jalammar.github.io. The Chinese
+translations in this repository are derivative works published under the same
+license. Translation errors are ours and do not represent the views of the
+author.
+
+# 构建代码许可 / Build code License
+
+`tools/` 目录下的构建脚本按 MIT License 发布（MIT License, Copyright (c) 2025
+CodingPracticeGroup）。
