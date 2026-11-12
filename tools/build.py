@@ -126,7 +126,9 @@ STYLE = """
   h3 { margin-top:1.8em; font-size:1.1rem; }
   a { color: var(--accent); }
   img, video { max-width:100%; height:auto; }
-  .img-div, .img-div-any-width, .img-div-any-size, .cite { text-align:center; margin:1.2em 0; }
+  .img-div, .img-div-any-width, .img-div-any-size { text-align:center; margin:1.2em 0; }
+  .cite { background:var(--box); border:1px solid var(--border); border-radius:8px; padding:1em; margin:1em 0; }
+  .cite pre { background:none; border:none; padding:0; }
   .img-div img, .img-div-any-width img, .img-div-any-size img { max-width: 90%; }
   figcaption, .img-div br + *, .img-div-any-width br + * { color:var(--muted); }
   blockquote.subtle, blockquote { border-left:4px solid var(--border); margin:1em 0; padding:.3em 1em; color:var(--muted); }
