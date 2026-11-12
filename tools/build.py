@@ -117,7 +117,7 @@ STYLE = """
   * { box-sizing: border-box; }
   body { margin:0; padding:0; background:var(--bg); color:var(--fg);
          font: 16px/1.75 -apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
-  .wrap { max-width: 56em; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  .wrap { width: 92%; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
   header.site-header { border-bottom:1px solid var(--border); padding-bottom:.8rem; margin-bottom:1.5rem; }
   header.site-header a.brand { color:var(--fg); text-decoration:none; font-weight:700; font-size:1.15rem; }
   header.site-header .sub { color:var(--muted); font-size:.85rem; }
